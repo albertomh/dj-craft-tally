@@ -1,0 +1,17 @@
+# <https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference>
+
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+
+  # N.B. Dependabot only updates GitHub Actions in `.github/workflows/`, not composite
+  # actions in `.github/actions/` (these must be updated manually).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
