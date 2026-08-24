@@ -1,0 +1,98 @@
+# https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
+[project]
+name = "dj-craft-tally"
+version = "0.0.0"
+description = ""
+readme = "README.md"
+keywords = ["Django", "craft", "tally", "inventory", "workshop"]
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Alberto Morón Hernández", email = "alberto.moronh@gmail.com" },
+]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
+    "Framework :: Django :: 6.1",
+    "Framework :: Django :: 6.2",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Typing :: Typed",
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[dependency-groups]
+dev = ["ipython>=9.15.0,<10.0.0"]
+test = ["pytest>=9.1.0,<10.0.0", "pytest-randomly>=4.1.0,<5.0.0"]
+
+[project.urls]
+Repository = "https://github.com/albertomh/dj-craft-tally"
+Changelog = "https://github.com/albertomh/dj-craft-tally/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+exclude-newer = "7 days"
+
+[tool.uv.build-backend]
+module-name = ["dj-craft-tally"]
+module-root = "src"
+
+[tool.pytest]
+addopts = ["--strict-markers", "--pdbcls=IPython.terminal.debugger:TerminalPdb"]
+
+[tool.ruff]
+indent-width = 4
+line-length = 90
+
+[tool.ruff.lint]
+ignore = []
+select = [
+    # flake8-bugbear
+    "B",
+    # pycodestyle errors
+    "E",
+    # isort
+    "I",
+    # flake8-no-pep420
+    "INP",
+    # Pyflakes
+    "F",
+    #flake8-logging-format
+    "G",
+    # flake8-logging
+    "LOG",
+    # pylint-pl
+    "PL",
+    # flake8-pytest-style
+    "PT",
+    # ruff-specific-rules-ruf
+    "RUF",
+    # flake8-bandit
+    "S",
+    # flake8-tidy-imports
+    "TID",
+    # tryceratops-try
+    "TRY",
+    # flake8-print
+    "T20",
+    # pyupgrade-up
+    "UP",
+    # pycodestyle warnings
+    "W",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = ["S"]
