@@ -2,7 +2,7 @@
 [project]
 name = "dj-craft-tally"
 version = "0.0.0"
-description = ""
+description = "A Django app to help makers track projects and inventory in their workshop."
 readme = "README.md"
 keywords = ["Django", "craft", "tally", "inventory", "workshop"]
 license = "AGPL-3.0-or-later"
