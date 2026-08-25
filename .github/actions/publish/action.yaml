@@ -1,0 +1,66 @@
+# Re-usable GitHub Action that publishes to the Python Package Index (PyPI).
+#
+# Based on <https://docs.astral.sh/uv/guides/integration/github/#publishing-to-pypi>
+#
+# IMPORTANT!
+# The following click-ops steps must be taken to allow this action to publish packages:
+# 1. In <https://github.com/albertomh/dj-craft-tally/settings/environments>
+#    Create an environment with a name of `pypi` or `testpypi`.
+# 2. In the new environment, add a 'deployment branch or tag rule' with name pattern `[0-9]*.[0-9]*.[0-9]*`.
+# 3. Follow <https://docs.pypi.org/trusted-publishers/adding-a-publisher/> to add a
+#    'trusted publisher' to TestPyPI / PyPI
+#
+# Usage:
+#   ```yaml
+#   jobs:
+#     publish:
+#       runs-on: ubuntu-26.04
+#       environment:
+#         name: [pypi || testpypi]
+#       permissions:
+#         id-token: write
+#         contents: read
+#
+#       steps:
+#         - uses: actions/checkout@HASH
+#         - uses: ./.github/actions/publish
+#   ```
+#
+# Optionally specify a publish URL (specially for TestPyPI):
+#   ```yaml
+#           with:
+#             uv_publish_url: https://test.pypi.org/legacy/
+#   ```
+
+name: "publish"
+description: "Publish to the Python Package Index (PyPI)"
+
+inputs:
+  uv_publish_url:
+    description: "Publish endpoint. If omitted, uv's default (PyPI) is used."
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+    - name: Install the Python version specified by pyproject.toml
+      shell: bash
+      run: uv python install
+
+    - name: Build
+      shell: bash
+      run: uv build
+
+    - name: Publish
+      shell: bash
+      run: |
+        uv publish ${INPUT_UV_PUBLISH_URL:+--publish-url "$INPUT_UV_PUBLISH_URL"}
+      env:
+        INPUT_UV_PUBLISH_URL: ${{ inputs.uv_publish_url }}
