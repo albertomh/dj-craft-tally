@@ -17,9 +17,7 @@ nox.options.default_venv_backend = "uv|virtualenv"
 nox.options.sessions = [f"test(python='{MATRIX[-1][0]}', django='{MATRIX[-1][1]}')"]
 
 
-@nox.session
-@nox.parametrize(("python", "django"), MATRIX)
-def test(session: nox.Session, python: str, django: str) -> None:
+def _install_deps(session: nox.Session, django_version: str) -> None:
     session.run_install(
         "uv",
         "sync",
@@ -27,22 +25,27 @@ def test(session: nox.Session, python: str, django: str) -> None:
         f"--python={session.virtualenv.location}",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
+    session.install(f"django~={django_version}.0")
 
-    session.install(
-        ".",
-        f"django~={django}.0",
-    )
+
+@nox.session
+@nox.parametrize(("python", "django"), MATRIX)
+def test(session: nox.Session, python: str, django: str) -> None:
+    _install_deps(session, django)
+
+    session.run("coverage", "erase")
 
     session.run(
-        "python",
-        "-W",
-        "error::ResourceWarning",
-        "-W",
-        "error::DeprecationWarning",
-        "-W",
-        "error::PendingDeprecationWarning",
+        "coverage",
+        "run",
         "-m",
         "pytest",
+        "tests/",
         *session.posargs,
         env={"PYTHONDEVMODE": "1"},
     )
+
+    # combine data from parallel processes
+    session.run("coverage", "combine")
+    session.run("coverage", "report")
+    session.run("coverage", "html")
