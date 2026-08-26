@@ -31,6 +31,9 @@
 #           with:
 #             uv_publish_url: https://test.pypi.org/legacy/
 #   ```
+#
+# If using TestPyPI, remember to include a `[[tool.uv.index]]` table in pyproject.toml
+# as per <https://docs.astral.sh/uv/guides/package/#publishing-your-package>
 
 name: "publish"
 description: "Publish to the Python Package Index (PyPI)"
