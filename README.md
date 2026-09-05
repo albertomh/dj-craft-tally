@@ -2,7 +2,7 @@
 
 <!-- markdownlint-disable MD013 line-length -->
 ![python >= 3.10](https://img.shields.io/badge/Python>=3.10-4584b6?logo=python&logoColor=ffde57&style=flat-square)
-[![Django >= 4.2](https://img.shields.io/badge/Django>=4.2-092E20?logo=django&logoColor=ffffff&style=flat-square)](https://docs.djangoproject.com/en/stable/)
+[![Django >= 5.2](https://img.shields.io/badge/Django>=5.2-092E20?logo=django&logoColor=ffffff&style=flat-square)](https://docs.djangoproject.com/en/stable/)
 [![prek](https://img.shields.io/badge/prek-CC5A23?logo=prek&logoColor=FFFFFF&style=flat-square)](https://github.com/j178/prek)
 [![pytest](https://img.shields.io/badge/pytest-0A9EDC?logo=pytest&logoColor=white&style=flat-square)](https://github.com/pytest-dev/pytest)
 [![nox](https://img.shields.io/badge/%F0%9F%A6%8A-Nox-D85E00.svg?style=flat-square)](https://github.com/wntrblm/nox)
@@ -15,7 +15,7 @@
 
 ## Prerequisites
 
-- A Django webapp using Django >= 4.2
+- A Django webapp using Django >= 5.2
 
 ## Install
 
