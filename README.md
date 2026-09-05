@@ -15,7 +15,7 @@
 
 ## Prerequisites
 
-- A Django webapp using Django >= 4.2
+- A Django webapp using Django >= 5.2
 
 ## Install
 
