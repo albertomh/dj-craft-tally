@@ -32,6 +32,21 @@ jobs:
   release-please:
     runs-on: ubuntu-26.04
     steps:
+      - name: Validate Release Please token
+        env:
+          GH_TOKEN: ${{ secrets.DJ_CRAFT_TALLY_RELEASE_PLEASE_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if [[ -z "${GH_TOKEN}" ]]; then
+            echo "::error::DJ_CRAFT_TALLY_RELEASE_PLEASE_TOKEN is not set."
+            exit 1
+          fi
+
+          if ! gh api "repos/${GH_REPO}" --silent; then
+            echo "::error::DJ_CRAFT_TALLY_RELEASE_PLEASE_TOKEN cannot read ${GH_REPO}. For a fine-grained PAT, grant it access to this repository with Contents: read/write, Pull requests: read/write, and Metadata: read."
+            exit 1
+          fi
+        shell: bash
       - id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
@@ -44,7 +59,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: ${{ steps.release.outputs.prs_created == 'true' }}
         with:
-          ref: release-please--branches--main
+          ref: ${{ fromJson(steps.release.outputs.pr).headBranchName }}
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         if: ${{ steps.release.outputs.prs_created == 'true' }}
         with:
