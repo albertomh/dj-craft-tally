@@ -73,6 +73,10 @@ filterwarnings = [
     "error::PendingDeprecationWarning",
 ]
 
+[[tool.mypy.overrides]]
+module = ["dj_craft_tally.migrations.*"]
+disable_error_code = ["var-annotated"]
+
 [tool.ruff]
 indent-width = 4
 line-length = 90
