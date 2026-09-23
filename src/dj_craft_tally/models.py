@@ -2,8 +2,10 @@
 
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from dj_craft_tally.identifiers import uuid7
@@ -11,6 +13,52 @@ from dj_craft_tally.identifiers import uuid7
 QUANTITY_MAX_DIGITS = 15
 QUANTITY_DECIMAL_PLACES = 6
 MAX_SCALE_TO_BASE = Decimal("999999999.999999")
+
+
+class Workshop(models.Model):
+    """A shared workshop that owns inventory, equipment, and projects."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        ordering = ("name",)
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class WorkshopMembership(models.Model):
+    """A user's role in a workshop, using the host project's user model."""
+
+    class Role(models.TextChoices):
+        OWNER = "owner", _("Owner")
+        MEMBER = "member", _("Member")
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    workshop = models.ForeignKey(
+        Workshop, on_delete=models.CASCADE, related_name="memberships"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="craft_tally_workshop_memberships",
+    )
+    role = models.CharField(max_length=16, choices=Role, default=Role.MEMBER)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        ordering = ("workshop", "user")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["workshop", "user"], name="unique_workshop_membership"
+            ),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.user} in {self.workshop}"
 
 
 class Unit(models.Model):
