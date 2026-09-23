@@ -37,6 +37,9 @@ dependencies = [
 ]
 [dependency-groups]
 dev = ["ipython>8.37.0,<9.0.0"]
+docs = [
+    "zensical>=0.0.62",
+]
 test = [
     "coverage>=7.15.0,<8.0.0",
     "pytest>=9.1.0,<10.0.0",

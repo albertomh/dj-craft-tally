@@ -74,3 +74,14 @@ uv build
 # in the target Django webapp project
 uv add ~/Projects/dj-craft-tally/dist/dj_craft_tally-M.m.p-py3-none-any.whl
 ```
+
+### Build documentation
+
+The documentation is built with [Zensical](https://zensical.org/).
+
+```sh
+uv sync --group docs
+uv run zensical serve
+```
+
+Pushes to `main` that change documentation deploy to GitHub Pages.

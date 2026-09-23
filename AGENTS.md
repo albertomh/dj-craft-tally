@@ -72,6 +72,11 @@ valuable to independent Django adopters and can remain free of SaaS-specific
 assumptions. Coordinate compatible releases rather than importing web-app code
 or creating a circular dependency.
 
+## GitHub Actions
+
+Pin every third-party action in workflow files to a full commit SHA, with its
+readable release tag in a trailing comment. Do not use mutable version tags.
+
 ## Git
 
 Keep commits small and single-purpose. Write conventional commit messages.
