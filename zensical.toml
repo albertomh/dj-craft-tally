@@ -1,0 +1,9 @@
+[project]
+site_name = "dj-craft-tally"
+site_description = "A Django app to help makers track projects and inventory in their workshop."
+site_url = "https://albertomh.github.io/dj-craft-tally/"
+repo_url = "https://github.com/albertomh/dj-craft-tally"
+repo_name = "albertomh/dj-craft-tally"
+
+[project.theme]
+features = ["content.action.edit", "content.action.view"]
