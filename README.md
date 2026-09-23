@@ -31,7 +31,7 @@
     ```python
     INSTALLED_APPS = [
         ...,
-        'dj_craft_tally',
+        "dj_craft_tally",
         ...,
     ]
     ```
