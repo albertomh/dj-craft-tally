@@ -3,6 +3,7 @@ from typing import ClassVar
 from django.contrib import admin
 
 from dj_craft_tally.models import (
+    Equipment,
     Material,
     MaterialLot,
     Unit,
@@ -49,3 +50,17 @@ class MaterialLotAdmin(admin.ModelAdmin):
     )
     list_filter: ClassVar = ("material",)
     search_fields: ClassVar = ("reference", "supplier", "material__name")
+
+
+@admin.register(Equipment)
+class EquipmentAdmin(admin.ModelAdmin):
+    list_display: ClassVar = (
+        "name",
+        "workshop",
+        "kind",
+        "technology",
+        "manufacturer",
+        "model",
+    )
+    list_filter: ClassVar = ("workshop", "kind")
+    search_fields: ClassVar = ("name", "technology", "manufacturer", "model")
