@@ -8,6 +8,8 @@ from dj_craft_tally.models import (
     Equipment,
     Material,
     MaterialLot,
+    Project,
+    ProjectStatusChange,
     Unit,
     Workshop,
     WorkshopMembership,
@@ -85,3 +87,48 @@ class EquipmentAdmin(admin.ModelAdmin):
     )
     list_filter: ClassVar = ("workshop", "kind")
     search_fields: ClassVar = ("name", "technology", "manufacturer", "model")
+
+
+class ProjectStatusChangeInline(admin.TabularInline):
+    model = ProjectStatusChange
+    can_delete = False
+    extra = 0
+    readonly_fields: ClassVar = (
+        "previous_status",
+        "status",
+        "occurred_at",
+        "recorded_at",
+        "notes",
+    )
+
+    def has_add_permission(self, request, obj=None) -> bool:
+        return False
+
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    inlines: ClassVar = (ProjectStatusChangeInline,)
+    list_display: ClassVar = ("name", "workshop", "blueprint", "status", "completed_at")
+    list_filter: ClassVar = ("workshop", "status")
+    search_fields: ClassVar = ("name", "description")
+
+
+@admin.register(ProjectStatusChange)
+class ProjectStatusChangeAdmin(admin.ModelAdmin):
+    readonly_fields: ClassVar = (
+        "project",
+        "previous_status",
+        "status",
+        "occurred_at",
+        "recorded_at",
+        "notes",
+    )
+
+    def has_add_permission(self, request) -> bool:
+        return False
+
+    def has_change_permission(self, request, obj=None) -> bool:
+        return False
+
+    def has_delete_permission(self, request, obj=None) -> bool:
+        return False

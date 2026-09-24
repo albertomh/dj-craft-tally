@@ -1,11 +1,12 @@
 """Core domain models for workshop inventory and projects."""
 
+from datetime import datetime
 from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -281,3 +282,105 @@ class Unit(models.Model):
 
     def __str__(self) -> str:
         return self.symbol
+
+
+class Project(models.Model):
+    """A creative undertaking, optionally based on a reusable blueprint."""
+
+    class Status(models.TextChoices):
+        PLANNED = "planned", _("Planned")
+        ACTIVE = "active", _("Active")
+        STALLED = "stalled", _("Stalled")
+        COMPLETE = "complete", _("Complete")
+        ABANDONED = "abandoned", _("Abandoned")
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    workshop = models.ForeignKey(
+        Workshop, on_delete=models.PROTECT, related_name="projects"
+    )
+    name = models.CharField(max_length=200)
+    blueprint = models.ForeignKey(
+        Blueprint,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="projects",
+    )
+    status = models.CharField(max_length=16, choices=Status, default=Status.PLANNED)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("status", "name")
+
+    def clean(self) -> None:
+        super().clean()
+        if self.blueprint_id and self.blueprint.workshop_id != self.workshop_id:
+            raise ValidationError(
+                {"blueprint": _("The blueprint must belong to the project's workshop.")}
+            )
+
+    def set_status(
+        self, status: Status, *, occurred_at: datetime | None = None, notes: str = ""
+    ) -> None:
+        self._status_change_occurred_at = occurred_at
+        self._status_change_notes = notes
+        self.status = status
+        try:
+            self.save()
+        finally:
+            del self._status_change_occurred_at
+            del self._status_change_notes
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        is_adding = self._state.adding
+        previous_status = None
+        if not is_adding and (
+            kwargs.get("update_fields") is None or "status" in kwargs["update_fields"]
+        ):
+            previous_status = (
+                type(self).objects.values_list("status", flat=True).get(pk=self.pk)
+            )
+        with transaction.atomic(using=self._state.db):
+            super().save(*args, **kwargs)
+            if is_adding:
+                ProjectStatusChange.objects.create(
+                    project=self, status=self.status, occurred_at=self.created_at
+                )
+            elif previous_status != self.status:
+                ProjectStatusChange.objects.create(
+                    project=self,
+                    previous_status=previous_status,
+                    status=self.status,
+                    occurred_at=getattr(self, "_status_change_occurred_at", None)
+                    or timezone.now(),
+                    notes=getattr(self, "_status_change_notes", ""),
+                )
+
+
+class ProjectStatusChange(models.Model):
+    """An immutable, timestamped entry in a project's status history."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="status_changes"
+    )
+    previous_status = models.CharField(max_length=16, choices=Project.Status, blank=True)
+    status = models.CharField(max_length=16, choices=Project.Status)
+    occurred_at = models.DateTimeField()
+    recorded_at = models.DateTimeField(default=timezone.now, editable=False)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("occurred_at", "recorded_at")
+        indexes = (models.Index(fields=["project", "occurred_at"]),)
+
+    def save(self, *args, **kwargs) -> None:
+        if not self._state.adding:
+            raise ValidationError(_("Project status history entries cannot be changed."))
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs) -> None:
+        raise ValidationError(_("Project status history entries cannot be deleted."))
