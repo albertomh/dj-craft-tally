@@ -6,6 +6,8 @@ from dj_craft_tally.models import (
     Blueprint,
     BlueprintMaterialRequirement,
     Equipment,
+    InventoryTransaction,
+    InventoryTransactionLine,
     Material,
     MaterialLot,
     Project,
@@ -160,3 +162,23 @@ class ProjectStepAdmin(admin.ModelAdmin):
         if db_field.name == "sequence":
             form_field.widget.attrs["min"] = 1
         return form_field
+
+
+@admin.register(InventoryTransaction)
+class InventoryTransactionAdmin(admin.ModelAdmin):
+    date_hierarchy = "occurred_at"
+    list_display: ClassVar = (
+        "occurred_at",
+        "workshop",
+        "kind",
+        "project",
+        "project_step",
+        "reference",
+    )
+    list_filter: ClassVar = ("workshop", "kind")
+
+
+@admin.register(InventoryTransactionLine)
+class InventoryTransactionLineAdmin(admin.ModelAdmin):
+    list_display: ClassVar = ("transaction", "material", "material_lot", "quantity")
+    list_filter: ClassVar = ("material",)
