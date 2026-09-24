@@ -2,7 +2,13 @@ from typing import ClassVar
 
 from django.contrib import admin
 
-from dj_craft_tally.models import Unit, Workshop, WorkshopMembership
+from dj_craft_tally.models import (
+    Material,
+    MaterialLot,
+    Unit,
+    Workshop,
+    WorkshopMembership,
+)
 
 
 @admin.register(Unit)
@@ -23,3 +29,23 @@ class WorkshopMembershipAdmin(admin.ModelAdmin):
     list_display: ClassVar = ("workshop", "user", "role", "created_at")
     list_filter: ClassVar = ("role",)
     search_fields: ClassVar = ("workshop__name", "user__username")
+
+
+@admin.register(Material)
+class MaterialAdmin(admin.ModelAdmin):
+    list_display: ClassVar = ("name", "workshop", "unit")
+    list_filter: ClassVar = ("workshop",)
+    search_fields: ClassVar = ("name",)
+
+
+@admin.register(MaterialLot)
+class MaterialLotAdmin(admin.ModelAdmin):
+    list_display: ClassVar = (
+        "reference",
+        "material",
+        "package_count",
+        "quantity_per_package",
+        "supplier",
+    )
+    list_filter: ClassVar = ("material",)
+    search_fields: ClassVar = ("reference", "supplier", "material__name")

@@ -61,6 +61,67 @@ class WorkshopMembership(models.Model):
         return f"{self.user} in {self.workshop}"
 
 
+class Material(models.Model):
+    """A consumable material, tracked in one stock unit."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    workshop = models.ForeignKey(
+        Workshop, on_delete=models.PROTECT, related_name="materials"
+    )
+    name = models.CharField(max_length=200)
+    unit = models.ForeignKey("Unit", on_delete=models.PROTECT, related_name="materials")
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        ordering = ("name",)
+        constraints = (
+            models.UniqueConstraint(
+                fields=["workshop", "name"], name="unique_workshop_material_name"
+            ),
+        )
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class MaterialLot(models.Model):
+    """A received batch of one material, including package details."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    material = models.ForeignKey(Material, on_delete=models.PROTECT, related_name="lots")
+    reference = models.CharField(max_length=200, blank=True)
+    supplier = models.CharField(max_length=200, blank=True)
+    package_count = models.PositiveIntegerField(default=1)
+    quantity_per_package = models.DecimalField(
+        max_digits=QUANTITY_MAX_DIGITS,
+        decimal_places=QUANTITY_DECIMAL_PLACES,
+        validators=[MinValueValidator(Decimal("0.000001"))],
+    )
+    received_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("material__name", "reference")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["material", "reference"], name="unique_material_lot_reference"
+            ),
+        )
+
+    @property
+    def total_quantity(self) -> Decimal:
+        return self.package_count * self.quantity_per_package
+
+    def save(self, *args, **kwargs) -> None:
+        if not self.reference:
+            self.reference = f"lot-{self.id}"
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.material}: {self.reference}"
+
+
 class Unit(models.Model):
     """A global unit of measure used for inventory and outputs.
 
