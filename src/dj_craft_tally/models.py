@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
@@ -153,6 +154,81 @@ class Equipment(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class Blueprint(models.Model):
+    """A reusable plan for making a named output from material requirements."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    workshop = models.ForeignKey(
+        Workshop, on_delete=models.PROTECT, related_name="blueprints"
+    )
+    name = models.CharField(max_length=200)
+    output_name = models.CharField(max_length=200)
+    output_quantity = models.DecimalField(
+        max_digits=QUANTITY_MAX_DIGITS,
+        decimal_places=QUANTITY_DECIMAL_PLACES,
+        default=Decimal("1"),
+        validators=[MinValueValidator(0)],
+    )
+    output_unit = models.ForeignKey(
+        "Unit", on_delete=models.PROTECT, related_name="blueprint_outputs"
+    )
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        ordering = ("name",)
+        constraints = (
+            models.UniqueConstraint(
+                fields=["workshop", "name"], name="unique_workshop_blueprint_name"
+            ),
+        )
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class BlueprintMaterialRequirement(models.Model):
+    """The quantity of a material needed for one run of a blueprint."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    blueprint = models.ForeignKey(
+        Blueprint, on_delete=models.CASCADE, related_name="requirements"
+    )
+    material = models.ForeignKey(
+        Material, on_delete=models.PROTECT, related_name="blueprint_requirements"
+    )
+    quantity = models.DecimalField(
+        max_digits=QUANTITY_MAX_DIGITS,
+        decimal_places=QUANTITY_DECIMAL_PLACES,
+        validators=[MinValueValidator(Decimal("0.000001"))],
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("blueprint__name", "material__name")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["blueprint", "material"],
+                name="unique_blueprint_material_requirement",
+            ),
+        )
+
+    def clean(self) -> None:
+        super().clean()
+        if (
+            self.blueprint_id
+            and self.material_id
+            and self.blueprint.workshop_id != self.material.workshop_id
+        ):
+            raise ValidationError(
+                {"material": _("The material must belong to the blueprint's workshop.")}
+            )
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class Unit(models.Model):

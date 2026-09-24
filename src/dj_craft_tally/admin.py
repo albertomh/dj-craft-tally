@@ -3,6 +3,8 @@ from typing import ClassVar
 from django.contrib import admin
 
 from dj_craft_tally.models import (
+    Blueprint,
+    BlueprintMaterialRequirement,
     Equipment,
     Material,
     MaterialLot,
@@ -10,6 +12,25 @@ from dj_craft_tally.models import (
     Workshop,
     WorkshopMembership,
 )
+
+
+class BlueprintMaterialRequirementInline(admin.TabularInline):
+    model = BlueprintMaterialRequirement
+    extra = 0
+
+
+@admin.register(Blueprint)
+class BlueprintAdmin(admin.ModelAdmin):
+    inlines: ClassVar = (BlueprintMaterialRequirementInline,)
+    list_display: ClassVar = (
+        "name",
+        "workshop",
+        "output_quantity",
+        "output_unit",
+        "output_name",
+    )
+    list_filter: ClassVar = ("workshop",)
+    search_fields: ClassVar = ("name", "output_name")
 
 
 @admin.register(Unit)
