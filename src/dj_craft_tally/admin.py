@@ -10,6 +10,8 @@ from dj_craft_tally.models import (
     MaterialLot,
     Project,
     ProjectStatusChange,
+    ProjectStep,
+    ProjectStepMeasurement,
     Unit,
     Workshop,
     WorkshopMembership,
@@ -132,3 +134,29 @@ class ProjectStatusChangeAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None) -> bool:
         return False
+
+
+class ProjectStepMeasurementInline(admin.TabularInline):
+    model = ProjectStepMeasurement
+    extra = 0
+
+
+@admin.register(ProjectStep)
+class ProjectStepAdmin(admin.ModelAdmin):
+    inlines: ClassVar = (ProjectStepMeasurementInline,)
+    list_display: ClassVar = (
+        "sequence",
+        "name",
+        "reference",
+        "project",
+        "equipment",
+        "outcome",
+        "occurred_at",
+    )
+    list_filter: ClassVar = ("outcome", "equipment")
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        form_field = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if db_field.name == "sequence":
+            form_field.widget.attrs["min"] = 1
+        return form_field

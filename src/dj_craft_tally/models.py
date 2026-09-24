@@ -384,3 +384,92 @@ class ProjectStatusChange(models.Model):
 
     def delete(self, *args, **kwargs) -> None:
         raise ValidationError(_("Project status history entries cannot be deleted."))
+
+
+class ProjectStep(models.Model):
+    """One ordered physical operation carried out as part of a project."""
+
+    class Outcome(models.TextChoices):
+        SUCCESS = "success", _("Success")
+        FAILURE = "failure", _("Failure")
+        PARTIAL_SUCCESS = "partial_success", _("Partial success")
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name="steps")
+    sequence = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    name = models.CharField(max_length=100)
+    blueprint = models.ForeignKey(
+        Blueprint,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="project_steps",
+    )
+    equipment = models.ForeignKey(
+        Equipment,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="project_steps",
+    )
+    reference = models.CharField(max_length=200, blank=True, unique=True)
+    source_reference = models.CharField(max_length=500, blank=True)
+    outcome = models.CharField(max_length=20, choices=Outcome, blank=True)
+    occurred_at = models.DateTimeField()
+    recorded_at = models.DateTimeField(default=timezone.now, editable=False)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("project", "sequence")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["project", "sequence"], name="unique_project_step_sequence"
+            ),
+        )
+
+    def clean(self) -> None:
+        super().clean()
+        errors = {}
+        if self.blueprint_id and self.blueprint.workshop_id != self.project.workshop_id:
+            errors["blueprint"] = _(
+                "The blueprint must belong to the project's workshop."
+            )
+        if self.equipment_id and self.equipment.workshop_id != self.project.workshop_id:
+            errors["equipment"] = _(
+                "The equipment must belong to the project's workshop."
+            )
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs) -> None:
+        if not self.reference:
+            self.reference = f"step-{self.id}"
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+class ProjectStepMeasurement(models.Model):
+    """A named measurement recorded during or after a project step."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    project_step = models.ForeignKey(
+        ProjectStep, on_delete=models.CASCADE, related_name="measurements"
+    )
+    name = models.CharField(max_length=100)
+    quantity = models.DecimalField(
+        max_digits=QUANTITY_MAX_DIGITS,
+        decimal_places=QUANTITY_DECIMAL_PLACES,
+        validators=[MinValueValidator(Decimal("0"))],
+    )
+    unit = models.ForeignKey(
+        Unit, on_delete=models.PROTECT, related_name="project_step_measurements"
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("project_step__sequence", "name")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["project_step", "name"], name="unique_project_step_measurement"
+            ),
+        )
