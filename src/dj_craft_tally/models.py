@@ -63,8 +63,28 @@ class WorkshopMembership(models.Model):
         return f"{self.user} in {self.workshop}"
 
 
+class MaterialQuerySet(models.QuerySet):
+    """QuerySet safeguards for material stock units."""
+
+    def update(self, **kwargs) -> int:
+        if {"unit", "unit_id"}.intersection(kwargs):
+            raise ValidationError(
+                _("Material stock units must be changed through the model instance.")
+            )
+        return super().update(**kwargs)
+
+    def bulk_update(self, objs, fields, batch_size=None) -> int:
+        if {"unit", "unit_id"}.intersection(fields):
+            raise ValidationError(
+                _("Material stock units cannot be changed with bulk_update().")
+            )
+        return super().bulk_update(objs, fields, batch_size=batch_size)
+
+
 class Material(models.Model):
     """A consumable material, tracked in one stock unit."""
+
+    objects = MaterialQuerySet.as_manager()
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     workshop = models.ForeignKey(
@@ -85,6 +105,30 @@ class Material(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs) -> None:
+        unit_is_being_saved = kwargs.get("update_fields") is None or bool(
+            {"unit", "unit_id"}.intersection(kwargs["update_fields"])
+        )
+        if not self._state.adding and unit_is_being_saved:
+            previous_unit_id = (
+                type(self).objects.values_list("unit_id", flat=True).get(pk=self.pk)
+            )
+            has_quantity_references = (
+                self.lots.exists()
+                or self.blueprint_requirements.exists()
+                or self.inventory_lines.exists()
+            )
+            if previous_unit_id != self.unit_id and has_quantity_references:
+                raise ValidationError(
+                    {
+                        "unit": _(
+                            "The stock unit cannot change after this material has been "
+                            "used in inventory, lots, or blueprints."
+                        )
+                    }
+                )
+        super().save(*args, **kwargs)
 
 
 class MaterialLot(models.Model):
@@ -473,3 +517,119 @@ class ProjectStepMeasurement(models.Model):
                 fields=["project_step", "name"], name="unique_project_step_measurement"
             ),
         )
+
+
+class InventoryTransaction(models.Model):
+    """An immutable, dated inventory movement containing signed lines."""
+
+    class Kind(models.TextChoices):
+        RECEIVE = "receive", _("Received")
+        PRODUCE = "produce", _("Produced")
+        CONSUME = "consume", _("Consumed")
+        ADJUST = "adjust", _("Adjusted")
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    workshop = models.ForeignKey(
+        Workshop, on_delete=models.PROTECT, related_name="inventory_transactions"
+    )
+    kind = models.CharField(max_length=16, choices=Kind)
+    occurred_at = models.DateTimeField()
+    recorded_at = models.DateTimeField(default=timezone.now, editable=False)
+    project = models.ForeignKey(
+        Project,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="inventory_transactions",
+    )
+    project_step = models.ForeignKey(
+        ProjectStep,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="inventory_transactions",
+    )
+    reference = models.CharField(max_length=200, blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("-occurred_at", "-recorded_at")
+        indexes = (
+            models.Index(fields=["occurred_at"], name="craft_tally_occurred_at_idx"),
+            models.Index(fields=["kind"]),
+        )
+
+    def clean(self) -> None:
+        super().clean()
+        errors = {}
+        if self.project_id and self.project.workshop_id != self.workshop_id:
+            errors["project"] = _(
+                "The project must belong to the transaction's workshop."
+            )
+        if self.project_step_id:
+            if self.project_step.project.workshop_id != self.workshop_id:
+                errors["project_step"] = _(
+                    "The project step must belong to the transaction's workshop."
+                )
+            if self.project_id and self.project_step.project_id != self.project_id:
+                errors["project_step"] = _(
+                    "The project step must belong to the selected project."
+                )
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+class InventoryTransactionLine(models.Model):
+    """A signed material movement within an inventory transaction."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    transaction = models.ForeignKey(
+        InventoryTransaction, on_delete=models.CASCADE, related_name="lines"
+    )
+    material = models.ForeignKey(
+        Material, on_delete=models.PROTECT, related_name="inventory_lines"
+    )
+    material_lot = models.ForeignKey(
+        MaterialLot,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="inventory_lines",
+    )
+    quantity = models.DecimalField(
+        max_digits=QUANTITY_MAX_DIGITS, decimal_places=QUANTITY_DECIMAL_PLACES
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("transaction__occurred_at", "id")
+        constraints = (
+            models.CheckConstraint(
+                condition=~models.Q(quantity=0),
+                name="inventory_transaction_line_quantity_nonzero",
+            ),
+        )
+
+    def clean(self) -> None:
+        super().clean()
+        errors = {}
+        if self.material_lot_id and self.material_lot.material_id != self.material_id:
+            errors["material_lot"] = _("The lot must belong to the selected material.")
+        if (
+            self.transaction_id
+            and self.material_id
+            and self.transaction.workshop_id != self.material.workshop_id
+        ):
+            errors["material"] = _(
+                "The material must belong to the transaction's workshop."
+            )
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
