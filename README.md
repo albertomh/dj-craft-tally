@@ -63,6 +63,18 @@ uvx nox
 uvx nox -s test
 ```
 
+### Run the local demo project
+
+There is a demo Django project for exploring the app in the admin while
+developing it. From the repo root, run:
+
+```sh
+uv sync
+uv run python demo/manage.py migrate
+uv run python demo/manage.py createsuperuser
+uv run python demo/manage.py runserver
+```
+
 ### Use the development version in projects
 
 Build the package as a binary distribution (wheel) and install it in a Django project:
