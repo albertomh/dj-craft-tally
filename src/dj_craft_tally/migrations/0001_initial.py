@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 
 def add_initial_units(apps, schema_editor):
-    unit = apps.get_model("craft_tally", "Unit")
+    unit = apps.get_model("crafttally", "Unit")
     unit.objects.bulk_create(
         [
             unit(code="item", name="Item", symbol="item", dimension="count"),

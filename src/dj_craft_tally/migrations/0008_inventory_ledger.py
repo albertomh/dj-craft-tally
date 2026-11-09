@@ -8,7 +8,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("craft_tally", "0007_project_steps"),
+        ("crafttally", "0007_project_steps"),
     ]
 
     operations = [
@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="inventory_transactions",
-                        to="craft_tally.project",
+                        to="crafttally.project",
                     ),
                 ),
                 (
@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="inventory_transactions",
-                        to="craft_tally.projectstep",
+                        to="crafttally.projectstep",
                     ),
                 ),
                 (
@@ -70,12 +70,13 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="inventory_transactions",
-                        to="craft_tally.workshop",
+                        to="crafttally.workshop",
                     ),
                 ),
             ],
             options={
                 "ordering": ("-occurred_at", "-recorded_at"),
+                "db_table": "crafttally_inventory_tx",
             },
         ),
         migrations.CreateModel(
@@ -97,7 +98,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="inventory_lines",
-                        to="craft_tally.material",
+                        to="crafttally.material",
                     ),
                 ),
                 (
@@ -107,7 +108,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="inventory_lines",
-                        to="craft_tally.materiallot",
+                        to="crafttally.materiallot",
                     ),
                 ),
                 (
@@ -115,23 +116,22 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="lines",
-                        to="craft_tally.inventorytransaction",
+                        to="crafttally.inventorytransaction",
                     ),
                 ),
             ],
             options={
                 "ordering": ("transaction__occurred_at", "id"),
+                "db_table": "crafttally_inventory_tx_line",
             },
         ),
         migrations.AddIndex(
             model_name="inventorytransaction",
-            index=models.Index(
-                fields=["occurred_at"], name="craft_tally_occurred_at_idx"
-            ),
+            index=models.Index(fields=["occurred_at"], name="crafttally_occurred_at_idx"),
         ),
         migrations.AddIndex(
             model_name="inventorytransaction",
-            index=models.Index(fields=["kind"], name="craft_tally_kind_c17cd4_idx"),
+            index=models.Index(fields=["kind"], name="crafttally__kind_03a021_idx"),
         ),
         migrations.AddConstraint(
             model_name="inventorytransactionline",

@@ -46,12 +46,13 @@ class WorkshopMembership(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="craft_tally_workshop_memberships",
+        related_name="crafttally_workshop_memberships",
     )
     role = models.CharField(max_length=16, choices=Role, default=Role.MEMBER)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
+        db_table = "crafttally_workshop_membership"
         ordering = ("workshop", "user")
         constraints = (
             models.UniqueConstraint(
@@ -148,6 +149,7 @@ class MaterialLot(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        db_table = "crafttally_material_lot"
         ordering = ("material__name", "reference")
         constraints = (
             models.UniqueConstraint(
@@ -252,6 +254,7 @@ class BlueprintMaterialRequirement(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        db_table = "crafttally_blueprint_material_req"
         ordering = ("blueprint__name", "material__name")
         constraints = (
             models.UniqueConstraint(
@@ -418,6 +421,7 @@ class ProjectStatusChange(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        db_table = "crafttally_project_status_change"
         ordering = ("occurred_at", "recorded_at")
         indexes = (models.Index(fields=["project", "occurred_at"]),)
 
@@ -464,6 +468,7 @@ class ProjectStep(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        db_table = "crafttally_project_step"
         ordering = ("project", "sequence")
         constraints = (
             models.UniqueConstraint(
@@ -511,6 +516,7 @@ class ProjectStepMeasurement(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        db_table = "crafttally_project_step_measurement"
         ordering = ("project_step__sequence", "name")
         constraints = (
             models.UniqueConstraint(
@@ -553,9 +559,10 @@ class InventoryTransaction(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        db_table = "crafttally_inventory_tx"
         ordering = ("-occurred_at", "-recorded_at")
         indexes = (
-            models.Index(fields=["occurred_at"], name="craft_tally_occurred_at_idx"),
+            models.Index(fields=["occurred_at"], name="crafttally_occurred_at_idx"),
             models.Index(fields=["kind"]),
         )
 
@@ -606,6 +613,7 @@ class InventoryTransactionLine(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        db_table = "crafttally_inventory_tx_line"
         ordering = ("transaction__occurred_at", "id")
         constraints = (
             models.CheckConstraint(

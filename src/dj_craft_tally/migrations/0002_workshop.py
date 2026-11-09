@@ -9,7 +9,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("craft_tally", "0001_initial"),
+        ("crafttally", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
                     "user",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="craft_tally_workshop_memberships",
+                        related_name="crafttally_workshop_memberships",
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
@@ -78,12 +78,13 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="memberships",
-                        to="craft_tally.workshop",
+                        to="crafttally.workshop",
                     ),
                 ),
             ],
             options={
                 "ordering": ("workshop", "user"),
+                "db_table": "crafttally_workshop_membership",
                 "constraints": [
                     models.UniqueConstraint(
                         fields=("workshop", "user"), name="unique_workshop_membership"

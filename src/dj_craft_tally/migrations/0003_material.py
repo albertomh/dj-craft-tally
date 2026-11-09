@@ -10,7 +10,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("craft_tally", "0002_workshop"),
+        ("crafttally", "0002_workshop"),
     ]
 
     operations = [
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="materials",
-                        to="craft_tally.unit",
+                        to="crafttally.unit",
                     ),
                 ),
                 (
@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="materials",
-                        to="craft_tally.workshop",
+                        to="crafttally.workshop",
                     ),
                 ),
             ],
@@ -87,12 +87,13 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="lots",
-                        to="craft_tally.material",
+                        to="crafttally.material",
                     ),
                 ),
             ],
             options={
                 "ordering": ("material__name", "reference"),
+                "db_table": "crafttally_material_lot",
             },
         ),
         migrations.AddConstraint(

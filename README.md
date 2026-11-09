@@ -13,6 +13,10 @@
 
 `dj-craft-tally` is a Django app to help makers track projects and inventory in their workshop.
 
+> [!IMPORTANT]
+> The project is in early development and uses 0.x versions. Models, APIs, and
+> workflows may change between releases.
+
 ## Prerequisites
 
 - A Django webapp using Django >= 5.2
@@ -22,7 +26,7 @@
 1. Add as a dependency:
 
     ```sh
-    uv add dj-craft-tally`
+    uv add dj-craft-tally
     ```
 
 1. In `settings.py`, add to `INSTALLED_APPS` after any first-party apps and before
@@ -36,9 +40,24 @@
     ]
     ```
 
+1. Apply the migrations from your Django project's directory:
+
+    ```sh
+    python manage.py migrate
+    ```
+
+    The initial migration creates a set of common units. Enable Django admin in
+    your host project and use a staff account to manage the app's records.
+
 ## Features
 
-<!-- TODO... -->
+- Organise materials, equipment, and projects by workshop.
+- Record material lots and inventory movements.
+- Describe blueprint outputs and their material requirements.
+- Track projects, status history, project steps, and measurements in Django admin.
+
+See the [documentation](https://albertomh.github.io/dj-craft-tally/) for an admin
+walkthrough.
 
 ## Develop
 

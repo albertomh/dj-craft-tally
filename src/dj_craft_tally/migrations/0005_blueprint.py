@@ -10,7 +10,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("craft_tally", "0004_equipment"),
+        ("crafttally", "0004_equipment"),
     ]
 
     operations = [
@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="blueprint_outputs",
-                        to="craft_tally.unit",
+                        to="crafttally.unit",
                     ),
                 ),
                 (
@@ -57,7 +57,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="blueprints",
-                        to="craft_tally.workshop",
+                        to="crafttally.workshop",
                     ),
                 ),
             ],
@@ -93,7 +93,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="requirements",
-                        to="craft_tally.blueprint",
+                        to="crafttally.blueprint",
                     ),
                 ),
                 (
@@ -101,12 +101,13 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="blueprint_requirements",
-                        to="craft_tally.material",
+                        to="crafttally.material",
                     ),
                 ),
             ],
             options={
                 "ordering": ("blueprint__name", "material__name"),
+                "db_table": "crafttally_blueprint_material_req",
             },
         ),
         migrations.AddConstraint(
