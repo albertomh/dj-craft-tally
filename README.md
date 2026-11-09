@@ -77,11 +77,13 @@ uv add ~/Projects/dj-craft-tally/dist/dj_craft_tally-M.m.p-py3-none-any.whl
 
 ### Build documentation
 
-The documentation is built with [Zensical](https://zensical.org/).
+Documentation is hosted at <https://albertomh.github.io/dj-craft-tally/>.
+It is built with [Zensical](https://zensical.org/).
 
 ```sh
+# preview docs site locally on :9000
 uv sync --group docs
-uv run zensical serve
+uv run zensical serve -a localhost:9000
 ```
 
 Pushes to `main` that change documentation deploy to GitHub Pages.
