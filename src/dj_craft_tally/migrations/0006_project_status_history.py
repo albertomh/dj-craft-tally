@@ -8,7 +8,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("craft_tally", "0005_blueprint"),
+        ("crafttally", "0005_blueprint"),
     ]
 
     operations = [
@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="projects",
-                        to="craft_tally.blueprint",
+                        to="crafttally.blueprint",
                     ),
                 ),
                 (
@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="projects",
-                        to="craft_tally.workshop",
+                        to="crafttally.workshop",
                     ),
                 ),
             ],
@@ -122,16 +122,17 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="status_changes",
-                        to="craft_tally.project",
+                        to="crafttally.project",
                     ),
                 ),
             ],
             options={
                 "ordering": ("occurred_at", "recorded_at"),
+                "db_table": "crafttally_project_status_change",
                 "indexes": [
                     models.Index(
                         fields=["project", "occurred_at"],
-                        name="craft_tally_project_7cd41d_idx",
+                        name="crafttally__project_1c429e_idx",
                     )
                 ],
             },

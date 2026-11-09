@@ -10,7 +10,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("craft_tally", "0006_project_status_history"),
+        ("crafttally", "0006_project_status_history"),
     ]
 
     operations = [
@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="project_steps",
-                        to="craft_tally.blueprint",
+                        to="crafttally.blueprint",
                     ),
                 ),
                 (
@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="project_steps",
-                        to="craft_tally.equipment",
+                        to="crafttally.equipment",
                     ),
                 ),
                 (
@@ -80,12 +80,13 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="steps",
-                        to="craft_tally.project",
+                        to="crafttally.project",
                     ),
                 ),
             ],
             options={
                 "ordering": ("project", "sequence"),
+                "db_table": "crafttally_project_step",
             },
         ),
         migrations.CreateModel(
@@ -117,7 +118,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="measurements",
-                        to="craft_tally.projectstep",
+                        to="crafttally.projectstep",
                     ),
                 ),
                 (
@@ -125,12 +126,13 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="project_step_measurements",
-                        to="craft_tally.unit",
+                        to="crafttally.unit",
                     ),
                 ),
             ],
             options={
                 "ordering": ("project_step__sequence", "name"),
+                "db_table": "crafttally_project_step_measurement",
             },
         ),
         migrations.AddConstraint(
