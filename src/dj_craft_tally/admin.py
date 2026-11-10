@@ -81,6 +81,17 @@ class MaterialLotAdmin(admin.ModelAdmin):
     list_filter: ClassVar = ("material",)
     search_fields: ClassVar = ("reference", "supplier", "material__name")
 
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return (
+                "material",
+                "package_count",
+                "quantity_per_package",
+                "received_at",
+                "reference",
+            )
+        return super().get_readonly_fields(request, obj)
+
 
 @admin.register(Equipment)
 class EquipmentAdmin(admin.ModelAdmin):

@@ -50,7 +50,11 @@ with permission to manage the app's models.
    configure admin permissions.
 2. Create a **Material**, selecting the workshop and its stock unit, such as
    grams for filament. Create a **Material lot** to record package count,
-   quantity per package, supplier, and receipt details where relevant.
+   quantity per package, supplier, and receipt details where relevant. Creating
+   a lot automatically posts a receipt for the total package contents. Correct
+   the quantity with a separate transaction rather than editing the receipt.
+   Lots created before this feature are not backfilled, to avoid double counting
+   receipts that were already entered manually.
 3. To record a stock movement, create an **Inventory transaction** with its
    workshop, kind, and occurrence date. Then create an **Inventory transaction
    line** linked to it and the material. Quantities are signed: for example,
