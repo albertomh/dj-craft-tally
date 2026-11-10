@@ -281,6 +281,7 @@ class Equipment(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        verbose_name_plural = _("Equipment")
         ordering = ("name",)
         constraints = (
             models.UniqueConstraint(

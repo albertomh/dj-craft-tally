@@ -3,6 +3,9 @@ from typing import ClassVar
 
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
+from django.db import models
+from django.forms import ModelForm
+from django.forms.widgets import Textarea
 from django.utils import formats
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -25,9 +28,53 @@ from dj_craft_tally.models import (
 )
 
 
+class BlueprintMaterialRequirementForm(ModelForm):
+    class Meta:
+        model = BlueprintMaterialRequirement
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        instance = self.instance
+        if (
+            instance._state.adding
+            or instance.quantity is None
+            or not instance.material_id
+        ):
+            return
+
+        unit = instance.material.unit
+        value = Decimal(instance.quantity)
+
+        # Never display fewer places than the stored value needs, otherwise
+        # re-saving the form would silently truncate data.
+        exponent = value.normalize().as_tuple().exponent
+        if not isinstance(exponent, int):
+            return
+        needed = max(0, -exponent)
+        places = max(unit.display_decimal_places, needed)
+
+        # keep it a Decimal so has_changed() doesn't report a spurious change
+        self.initial["quantity"] = Decimal(f"{value:.{places}f}")
+        self.fields["quantity"].widget.attrs["step"] = (
+            "1" if places == 0 else f"0.{'0' * (places - 1)}1"
+        )
+
+
 class BlueprintMaterialRequirementInline(admin.TabularInline):
     model = BlueprintMaterialRequirement
+    form = BlueprintMaterialRequirementForm
     extra = 0
+    formfield_overrides: ClassVar = {
+        models.TextField: {
+            "widget": Textarea(
+                attrs={
+                    "rows": 1,
+                    "style": "height: 20px; min-width: 250px; resize: vertical;",
+                }
+            )
+        },
+    }
 
 
 @admin.register(Blueprint)
@@ -44,6 +91,11 @@ class BlueprintAdmin(admin.ModelAdmin):
     )
     list_filter: ClassVar = ("workshop",)
     search_fields: ClassVar = ("name", "output_name")
+    formfield_overrides: ClassVar = {
+        models.TextField: {
+            "widget": Textarea(attrs={"rows": 2, "style": "min-width: 500px;"})
+        },
+    }
 
 
 @admin.register(Unit)
