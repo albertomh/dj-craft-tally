@@ -40,7 +40,6 @@ class Command(BaseCommand):
             raise CommandError(message)
 
         supports_posting = hasattr(InventoryTransaction, "post")
-        supports_conversion = hasattr(InventoryTransactionLine, "unit")
         now = timezone.now()
         admin = user_model.objects.create_superuser("demo", password="demo")  # noqa: S106
         studio = Workshop.objects.create(
@@ -49,7 +48,6 @@ class Command(BaseCommand):
         WorkshopMembership.objects.create(workshop=studio, user=admin, role="owner")
         Workshop.objects.create(name="Woodworking Bench", description="Second workshop")
         gram = Unit.objects.get(code="g")
-        kilogram = Unit.objects.get(code="kg")
         item = Unit.objects.get(code="item")
         pla = Material.objects.create(
             workshop=studio, name="Blue PLA filament", unit=gram
@@ -82,7 +80,6 @@ class Command(BaseCommand):
             kind,
             reference,
             *,
-            unit=None,
             project=None,
             step=None,
             post=True,
@@ -101,8 +98,6 @@ class Command(BaseCommand):
                 "material_lot": lot,
                 "quantity": Decimal(quantity),
             }
-            if unit is not None:
-                values["unit"] = unit
             InventoryTransactionLine.objects.create(**values)
             if supports_posting and post:
                 entry.post()
@@ -122,10 +117,8 @@ class Command(BaseCommand):
         requirement = {
             "blueprint": blueprint,
             "material": pla,
-            "quantity": Decimal("0.12") if supports_conversion else Decimal("120"),
+            "quantity": Decimal("120"),
         }
-        if supports_conversion:
-            requirement["unit"] = kilogram
         BlueprintMaterialRequirement.objects.create(**requirement)
         BlueprintMaterialRequirement.objects.create(
             blueprint=blueprint, material=bolts, quantity=4
@@ -152,10 +145,9 @@ class Command(BaseCommand):
         movement(
             pla,
             pla_lot,
-            "-0.125" if supports_conversion else "-125",
+            "-125",
             "consume",
             "Prototype print",
-            unit=kilogram if supports_conversion else None,
             project=project,
             step=step,
         )
@@ -172,3 +164,4 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS("Created demo data. Sign in as demo / demo.")
         )
+        self.stdout.write("Material quantities use the material's stock unit.")
