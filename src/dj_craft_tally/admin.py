@@ -1,6 +1,7 @@
 from typing import ClassVar
 
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
 
 from dj_craft_tally.models import (
     Blueprint,
@@ -168,6 +169,8 @@ class ProjectStepAdmin(admin.ModelAdmin):
 
 @admin.register(InventoryTransaction)
 class InventoryTransactionAdmin(admin.ModelAdmin):
+    actions: ClassVar = ("post_transactions",)
+    readonly_fields: ClassVar = ("posted",)
     date_hierarchy = "occurred_at"
     list_display: ClassVar = (
         "occurred_at",
@@ -176,11 +179,52 @@ class InventoryTransactionAdmin(admin.ModelAdmin):
         "project",
         "project_step",
         "reference",
+        "posted",
     )
     list_filter: ClassVar = ("workshop", "kind")
+
+    @admin.action(description="Post selected draft transactions")
+    def post_transactions(self, request, queryset):
+        for entry in queryset:
+            try:
+                entry.post()
+            except ValidationError as exc:
+                self.message_user(request, str(exc), level=messages.ERROR)
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and obj.posted:
+            return tuple(field.name for field in self.model._meta.fields)
+        return super().get_readonly_fields(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        return (
+            False if obj and obj.posted else super().has_delete_permission(request, obj)
+        )
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        actions.pop("delete_selected", None)
+        return actions
 
 
 @admin.register(InventoryTransactionLine)
 class InventoryTransactionLineAdmin(admin.ModelAdmin):
     list_display: ClassVar = ("transaction", "material", "material_lot", "quantity")
     list_filter: ClassVar = ("material",)
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and obj.transaction.posted:
+            return tuple(field.name for field in self.model._meta.fields)
+        return super().get_readonly_fields(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        return (
+            False
+            if obj and obj.transaction.posted
+            else super().has_delete_permission(request, obj)
+        )
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        actions.pop("delete_selected", None)
+        return actions
