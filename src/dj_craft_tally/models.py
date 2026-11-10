@@ -107,6 +107,12 @@ class Material(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    def stock_balance(self) -> Decimal:
+        """Return the sum of signed inventory movements in the stock unit."""
+        return sum(
+            self.inventory_lines.values_list("quantity", flat=True).iterator(), Decimal(0)
+        )
+
     def save(self, *args, **kwargs) -> None:
         unit_is_being_saved = kwargs.get("update_fields") is None or bool(
             {"unit", "unit_id"}.intersection(kwargs["update_fields"])
@@ -234,6 +240,20 @@ class Blueprint(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def available_runs(self) -> int | None:
+        """Return complete runs supported by stock, or None with no requirements."""
+        requirements = self.requirements.select_related("material")
+        capacities = [
+            max(0, int(requirement.material.stock_balance() // requirement.quantity))
+            for requirement in requirements
+        ]
+        return min(capacities) if capacities else None
+
+    def available_output(self) -> Decimal | None:
+        """Return output from complete available runs, or None if unspecified."""
+        runs = self.available_runs()
+        return None if runs is None else runs * self.output_quantity
 
 
 class BlueprintMaterialRequirement(models.Model):

@@ -60,7 +60,9 @@ with permission to manage the app's models.
    unit before entering it.
 4. Create a **Blueprint** for a repeatable output, and add its material
    requirements in the inline form. Each requirement is the amount needed for
-   one run, in that material's stock unit.
+   one run, in that material's stock unit. The admin shows stock balances,
+   complete available runs, and the resulting output. Capacity is unknown when
+   a blueprint has no requirements; it does not reserve stock for other work.
 5. Create a **Project**, optionally linked to a blueprint in the same workshop.
    Record work as ordered **Project steps**, with optional equipment and
    measurements. Change the project status as work progresses; status changes
