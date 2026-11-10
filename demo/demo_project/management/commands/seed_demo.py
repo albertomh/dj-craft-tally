@@ -40,7 +40,6 @@ class Command(BaseCommand):
             raise CommandError(message)
 
         supports_posting = hasattr(InventoryTransaction, "post")
-        supports_conversion = hasattr(InventoryTransactionLine, "unit")
         now = timezone.now()
         admin = user_model.objects.create_superuser("demo", password="demo")  # noqa: S106
         studio = Workshop.objects.create(
@@ -49,12 +48,14 @@ class Command(BaseCommand):
         WorkshopMembership.objects.create(workshop=studio, user=admin, role="owner")
         Workshop.objects.create(name="Woodworking Bench", description="Second workshop")
         gram = Unit.objects.get(code="g")
-        kilogram = Unit.objects.get(code="kg")
         item = Unit.objects.get(code="item")
         pla = Material.objects.create(
             workshop=studio, name="Blue PLA filament", unit=gram
         )
         bolts = Material.objects.create(workshop=studio, name="M3 bolts", unit=item)
+        organisers = Material.objects.create(
+            workshop=studio, name="Printed cable organisers", unit=item
+        )
         printer = Equipment.objects.create(
             workshop=studio, name="Workshop printer", kind="3d_printer", technology="FDM"
         )
@@ -82,7 +83,6 @@ class Command(BaseCommand):
             kind,
             reference,
             *,
-            unit=None,
             project=None,
             step=None,
             post=True,
@@ -101,15 +101,43 @@ class Command(BaseCommand):
                 "material_lot": lot,
                 "quantity": Decimal(quantity),
             }
-            if unit is not None:
-                values["unit"] = unit
             InventoryTransactionLine.objects.create(**values)
+            if supports_posting and post:
+                entry.post()
+
+        def multi_line_movement(  # noqa: PLR0913
+            kind, reference, lines, *, project=None, step=None, post=True
+        ):
+            entry = InventoryTransaction.objects.create(
+                workshop=studio,
+                kind=kind,
+                occurred_at=now,
+                reference=reference,
+                project=project,
+                project_step=step,
+            )
+            for material, lot, quantity, notes in lines:
+                InventoryTransactionLine.objects.create(
+                    transaction=entry,
+                    material=material,
+                    material_lot=lot,
+                    quantity=Decimal(quantity),
+                    notes=notes,
+                )
             if supports_posting and post:
                 entry.post()
 
         if not pla_lot.inventory_lines.exists():
             movement(pla, pla_lot, "2000", "receive", "PLA receipt")
             movement(bolts, bolt_lot, "100", "receive", "Bolt receipt")
+        multi_line_movement(
+            InventoryTransaction.Kind.RECEIVE,
+            "Shared supplies delivery",
+            [
+                (pla, None, "250", "Loose filament added to the shared bin."),
+                (bolts, None, "20", "Spare fasteners added to the shared bin."),
+            ],
+        )
 
         blueprint = Blueprint.objects.create(
             workshop=studio,
@@ -122,10 +150,8 @@ class Command(BaseCommand):
         requirement = {
             "blueprint": blueprint,
             "material": pla,
-            "quantity": Decimal("0.12") if supports_conversion else Decimal("120"),
+            "quantity": Decimal("120"),
         }
-        if supports_conversion:
-            requirement["unit"] = kilogram
         BlueprintMaterialRequirement.objects.create(**requirement)
         BlueprintMaterialRequirement.objects.create(
             blueprint=blueprint, material=bolts, quantity=4
@@ -149,17 +175,17 @@ class Command(BaseCommand):
         ProjectStepMeasurement.objects.create(
             project_step=step, name="Filament used", quantity=125, unit=gram
         )
-        movement(
-            pla,
-            pla_lot,
-            "-0.125" if supports_conversion else "-125",
-            "consume",
-            "Prototype print",
-            unit=kilogram if supports_conversion else None,
+        multi_line_movement(
+            InventoryTransaction.Kind.PRODUCE,
+            "Prototype production run",
+            [
+                (pla, pla_lot, "-125", "Filament consumed by the print."),
+                (bolts, bolt_lot, "-4", "Fasteners used in assembly."),
+                (organisers, None, "1", "Completed cable organiser."),
+            ],
             project=project,
             step=step,
         )
-        movement(bolts, bolt_lot, "-4", "consume", "Prototype assembly", project=project)
         if supports_posting:
             movement(
                 pla,
@@ -172,3 +198,4 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS("Created demo data. Sign in as demo / demo.")
         )
+        self.stdout.write("Material quantities use the material's stock unit.")

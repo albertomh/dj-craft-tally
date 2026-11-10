@@ -63,6 +63,14 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
                 == 4  # noqa: PLR2004
             )
         assert (
+            connection.execute(
+                "select count(*) from crafttally_inventory_tx_line "
+                "where transaction_id = (select id from crafttally_inventory_tx "
+                "where reference = 'Prototype production run')"
+            ).fetchone()[0]
+            == 3  # noqa: PLR2004
+        )
+        assert (
             connection.execute("select count(*) from crafttally_project").fetchone()[0]
             == 1
         )
