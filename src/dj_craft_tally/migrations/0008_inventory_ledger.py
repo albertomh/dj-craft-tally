@@ -91,7 +91,14 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
-                ("quantity", models.DecimalField(decimal_places=6, max_digits=15)),
+                (
+                    "quantity",
+                    models.DecimalField(
+                        decimal_places=6,
+                        help_text="Quantity in the material's stock unit.",
+                        max_digits=15,
+                    ),
+                ),
                 ("notes", models.TextField(blank=True)),
                 (
                     "material",

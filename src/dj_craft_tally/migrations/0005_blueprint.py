@@ -81,6 +81,7 @@ class Migration(migrations.Migration):
                     "quantity",
                     models.DecimalField(
                         decimal_places=6,
+                        help_text="Quantity in the material's stock unit.",
                         max_digits=15,
                         validators=[
                             django.core.validators.MinValueValidator(Decimal("0.000001"))
