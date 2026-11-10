@@ -8,6 +8,7 @@ DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
 
 INSTALLED_APPS = [
+    "demo_project",
     "dj_craft_tally",
     "django.contrib.admin",
     "django.contrib.auth",
