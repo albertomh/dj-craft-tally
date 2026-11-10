@@ -90,9 +90,15 @@ developing it. From the repo root, run:
 ```sh
 uv sync
 uv run python demo/manage.py migrate
-uv run python demo/manage.py createsuperuser
+uv run python demo/manage.py seed_demo
 uv run python demo/manage.py runserver
 ```
+
+Sign in at <http://127.0.0.1:8000/admin/> with username `demo` and password
+`demo`. The command creates sample workshop data and is safe to run again.
+The SQLite database is local and ignored by Git. To reset the demo, delete
+`demo/db.sqlite3`, then rerun the migrations and seed command. These settings
+and credentials are for local development only.
 
 ### Use the development version in projects
 

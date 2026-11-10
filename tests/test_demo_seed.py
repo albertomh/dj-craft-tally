@@ -47,10 +47,42 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
             ]
             == 2  # noqa: PLR2004
         )
+        tx_fields = {
+            row[1]
+            for row in connection.execute("pragma table_info(crafttally_inventory_tx)")
+        }
         assert connection.execute(
             "select count(*) from crafttally_inventory_tx"
-        ).fetchone()[0] == int("4")
+        ).fetchone()[0] == (5 if "posted" in tx_fields else 4)
+        if "posted" in tx_fields:
+            assert (
+                connection.execute(
+                    "select count(*) from crafttally_inventory_tx where posted = 1"
+                ).fetchone()[0]
+                == 4  # noqa: PLR2004
+            )
         assert (
             connection.execute("select count(*) from crafttally_project").fetchone()[0]
             == 1
         )
+        line_fields = {
+            row[1]
+            for row in connection.execute(
+                "pragma table_info(crafttally_inventory_tx_line)"
+            )
+        }
+        if "unit_id" in line_fields:
+            assert (
+                connection.execute(
+                    "select count(*) from crafttally_inventory_tx_line "
+                    "where unit_id is not null"
+                ).fetchone()[0]
+                == 1
+            )
+            assert (
+                connection.execute(
+                    "select count(*) from crafttally_blueprint_material_req "
+                    "where unit_id is not null"
+                ).fetchone()[0]
+                == 1
+            )
