@@ -1,5 +1,6 @@
 """Core domain models for workshop inventory and projects."""
 
+from collections.abc import Iterable
 from datetime import datetime
 from decimal import Decimal
 
@@ -67,18 +68,20 @@ class WorkshopMembership(models.Model):
 class MaterialQuerySet(models.QuerySet):
     """QuerySet safeguards for material stock units."""
 
-    def update(self, **kwargs) -> int:
-        if {"unit", "unit_id"}.intersection(kwargs):
+    PROTECTED_FIELDS = frozenset({"unit", "unit_id"})
+
+    def _check_fields_mutable(self, fields: Iterable[str]) -> None:
+        if self.PROTECTED_FIELDS.intersection(fields):
             raise ValidationError(
                 _("Material stock units must be changed through the model instance.")
             )
+
+    def update(self, **kwargs) -> int:
+        self._check_fields_mutable(kwargs)
         return super().update(**kwargs)
 
     def bulk_update(self, objs, fields, batch_size=None) -> int:
-        if {"unit", "unit_id"}.intersection(fields):
-            raise ValidationError(
-                _("Material stock units cannot be changed with bulk_update().")
-            )
+        self._check_fields_mutable(fields)
         return super().bulk_update(objs, fields, batch_size=batch_size)
 
 
@@ -141,8 +144,42 @@ class Material(models.Model):
         super().save(*args, **kwargs)
 
 
+class MaterialLotQuerySet(models.QuerySet):
+    """Prevent changes that would disconnect a lot from its receipt."""
+
+    PROTECTED_FIELDS = frozenset(
+        {
+            "material",
+            "material_id",
+            "package_count",
+            "quantity_per_package",
+            "received_at",
+            "reference",
+        }
+    )
+
+    def _check_fields_mutable(self, fields: Iterable[str]) -> None:
+        if self.PROTECTED_FIELDS.intersection(fields):
+            raise ValidationError(
+                _("A lot's material and received quantity cannot be changed.")
+            )
+
+    def update(self, **kwargs):
+        self._check_fields_mutable(kwargs)
+        return super().update(**kwargs)
+
+    def bulk_update(self, objs, fields, batch_size=None):
+        self._check_fields_mutable(fields)
+        return super().bulk_update(objs, fields, batch_size=batch_size)
+
+    def bulk_create(self, objs, **kwargs):
+        raise ValidationError(_("Create lots individually to record their receipts."))
+
+
 class MaterialLot(models.Model):
     """A received batch of one material, including package details."""
+
+    objects = MaterialLotQuerySet.as_manager()
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     material = models.ForeignKey(Material, on_delete=models.PROTECT, related_name="lots")
@@ -170,10 +207,53 @@ class MaterialLot(models.Model):
     def total_quantity(self) -> Decimal:
         return self.package_count * self.quantity_per_package
 
+    def clean(self) -> None:
+        super().clean()
+        if self.package_count is not None and self.package_count < 1:
+            raise ValidationError({"package_count": _("Enter at least one package.")})
+
     def save(self, *args, **kwargs) -> None:
         if not self.reference:
             self.reference = f"lot-{self.id}"
-        super().save(*args, **kwargs)
+        using = kwargs.get("using") or self._state.db or "default"
+        with transaction.atomic(using=using):
+            is_new = self._state.adding
+            if not is_new:
+                previous = (
+                    type(self).objects.using(using).select_for_update().get(pk=self.pk)
+                )
+                if (
+                    self.material_id,
+                    self.package_count,
+                    self.quantity_per_package,
+                    self.received_at,
+                    self.reference,
+                ) != (
+                    previous.material_id,
+                    previous.package_count,
+                    previous.quantity_per_package,
+                    previous.received_at,
+                    previous.reference,
+                ):
+                    raise ValidationError(
+                        _("A lot's material and received quantity cannot be changed.")
+                    )
+            self.full_clean()
+            super().save(*args, **kwargs)
+            if is_new:
+                receipt = InventoryTransaction.objects.using(using).create(
+                    workshop=self.material.workshop,
+                    kind=InventoryTransaction.Kind.RECEIVE,
+                    occurred_at=self.received_at or timezone.now(),
+                    reference=self.reference,
+                )
+                InventoryTransactionLine.objects.using(using).create(
+                    transaction=receipt,
+                    material=self.material,
+                    material_lot=self,
+                    quantity=self.total_quantity,
+                )
+                receipt.post()
 
     def __str__(self) -> str:
         return f"{self.material}: {self.reference}"

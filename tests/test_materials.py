@@ -27,6 +27,8 @@ def test_material_lot_records_package_count_and_contents(material) -> None:
         lot.save()
     with pytest.raises(ValidationError, match="cannot be changed"):
         MaterialLot.objects.filter(pk=lot.pk).update(package_count=11)
+    with pytest.raises(ValidationError, match="cannot be changed"):
+        MaterialLot.objects.bulk_update([lot], ["package_count"])
 
 
 @pytest.mark.django_db
