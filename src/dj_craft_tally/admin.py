@@ -34,6 +34,8 @@ class BlueprintAdmin(admin.ModelAdmin):
         "output_quantity",
         "output_unit",
         "output_name",
+        "available_runs",
+        "available_output",
     )
     list_filter: ClassVar = ("workshop",)
     search_fields: ClassVar = ("name", "output_name")
@@ -61,7 +63,7 @@ class WorkshopMembershipAdmin(admin.ModelAdmin):
 
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("name", "workshop", "unit")
+    list_display: ClassVar = ("name", "workshop", "unit", "stock_balance")
     list_filter: ClassVar = ("workshop",)
     search_fields: ClassVar = ("name",)
 
