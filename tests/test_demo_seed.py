@@ -28,7 +28,8 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
         )
 
     run("migrate", "--noinput")
-    run("seed_demo")
+    result = run("seed_demo")
+    assert "material's stock unit" in result.stdout
     run("seed_demo")
     with closing(sqlite3.connect(db_path)) as connection:
         assert (
@@ -64,18 +65,16 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
                 "pragma table_info(crafttally_inventory_tx_line)"
             )
         }
-        if "unit_id" in line_fields:
-            assert (
-                connection.execute(
-                    "select count(*) from crafttally_inventory_tx_line "
-                    "where unit_id is not null"
-                ).fetchone()[0]
-                == 1
+        assert "unit_id" not in line_fields
+        requirement_fields = {
+            row[1]
+            for row in connection.execute(
+                "pragma table_info(crafttally_blueprint_material_req)"
             )
-            assert (
-                connection.execute(
-                    "select count(*) from crafttally_blueprint_material_req "
-                    "where unit_id is not null"
-                ).fetchone()[0]
-                == 1
-            )
+        }
+        assert "unit_id" not in requirement_fields
+        assert connection.execute(
+            "select quantity from crafttally_blueprint_material_req "
+            "where material_id = (select id from crafttally_material "
+            "where name = 'Blue PLA filament')"
+        ).fetchone()[0] == int("120")
