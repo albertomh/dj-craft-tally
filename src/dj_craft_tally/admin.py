@@ -83,9 +83,9 @@ class BlueprintAdmin(admin.ModelAdmin):
     list_display: ClassVar = (
         "name",
         "workshop",
+        "output_name",
         "output_quantity",
         "output_unit",
-        "output_name",
         "available_runs",
         "available_output",
     )
