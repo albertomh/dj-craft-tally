@@ -43,6 +43,7 @@ class Migration(migrations.Migration):
                         default=django.utils.timezone.now, editable=False
                     ),
                 ),
+                ("posted", models.BooleanField(default=False, editable=False)),
                 ("reference", models.CharField(blank=True, max_length=200)),
                 ("notes", models.TextField(blank=True)),
                 (

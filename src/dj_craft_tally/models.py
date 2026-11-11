@@ -110,7 +110,10 @@ class Material(models.Model):
     def stock_balance(self) -> Decimal:
         """Return the sum of signed inventory movements in the stock unit."""
         return sum(
-            self.inventory_lines.values_list("quantity", flat=True).iterator(), Decimal(0)
+            self.inventory_lines.filter(transaction__posted=True)
+            .values_list("quantity", flat=True)
+            .iterator(),
+            Decimal(0),
         )
 
     def save(self, *args, **kwargs) -> None:
@@ -546,8 +549,26 @@ class ProjectStepMeasurement(models.Model):
         )
 
 
+class LedgerQuerySet(models.QuerySet):
+    """Disallow bulk mutations, which bypass ledger validation."""
+
+    def update(self, **kwargs):
+        raise ValidationError(_("Bulk updates of inventory records are not supported."))
+
+    def delete(self):
+        raise ValidationError(_("Bulk deletion of inventory records is not supported."))
+
+    def bulk_update(self, objs, fields, batch_size=None):
+        raise ValidationError(_("Bulk updates of inventory records are not supported."))
+
+    def bulk_create(self, objs, **kwargs):
+        raise ValidationError(_("Bulk creation of inventory records is not supported."))
+
+
 class InventoryTransaction(models.Model):
-    """An immutable, dated inventory movement containing signed lines."""
+    """A draft inventory movement that becomes immutable when posted."""
+
+    objects = LedgerQuerySet.as_manager()
 
     class Kind(models.TextChoices):
         RECEIVE = "receive", _("Received")
@@ -562,6 +583,7 @@ class InventoryTransaction(models.Model):
     kind = models.CharField(max_length=16, choices=Kind)
     occurred_at = models.DateTimeField()
     recorded_at = models.DateTimeField(default=timezone.now, editable=False)
+    posted = models.BooleanField(default=False, editable=False)
     project = models.ForeignKey(
         Project,
         null=True,
@@ -607,12 +629,52 @@ class InventoryTransaction(models.Model):
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs) -> None:
-        self.full_clean()
-        super().save(*args, **kwargs)
+        using = kwargs.get("using") or self._state.db or "default"
+        with transaction.atomic(using=using):
+            if not self._state.adding:
+                current = (
+                    type(self).objects.using(using).select_for_update().get(pk=self.pk)
+                )
+                if current.posted:
+                    raise ValidationError(
+                        _("Posted inventory transactions cannot be changed.")
+                    )
+            if self.posted:
+                raise ValidationError(_("Use post() to post an inventory transaction."))
+            self.full_clean()
+            super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        using = kwargs.get("using") or self._state.db or "default"
+        with transaction.atomic(using=using):
+            current = type(self).objects.using(using).select_for_update().get(pk=self.pk)
+            if current.posted:
+                raise ValidationError(
+                    _("Posted inventory transactions cannot be deleted.")
+                )
+            return super().delete(*args, **kwargs)
+
+    def post(self) -> None:
+        """Post a saved draft with at least one line; correct it with a new entry."""
+        using = self._state.db
+        with transaction.atomic(using=using):
+            current = type(self).objects.using(using).select_for_update().get(pk=self.pk)
+            if current.posted:
+                raise ValidationError(_("This inventory transaction is already posted."))
+            if not current.lines.exists():
+                raise ValidationError(
+                    _("An inventory transaction needs at least one line.")
+                )
+            models.QuerySet.update(
+                type(self).objects.using(using).filter(pk=self.pk), posted=True
+            )
+            self.posted = True
 
 
 class InventoryTransactionLine(models.Model):
     """A signed material movement within an inventory transaction."""
+
+    objects = LedgerQuerySet.as_manager()
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     transaction = models.ForeignKey(
@@ -648,6 +710,8 @@ class InventoryTransactionLine(models.Model):
     def clean(self) -> None:
         super().clean()
         errors = {}
+        if self.transaction_id and self.transaction.posted:
+            errors["transaction"] = _("Lines cannot be added to a posted transaction.")
         if self.material_lot_id and self.material_lot.material_id != self.material_id:
             errors["material_lot"] = _("The lot must belong to the selected material.")
         if (
@@ -662,5 +726,43 @@ class InventoryTransactionLine(models.Model):
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs) -> None:
-        self.full_clean()
-        super().save(*args, **kwargs)
+        using = kwargs.get("using") or self._state.db or "default"
+        with transaction.atomic(using=using):
+            if not self._state.adding:
+                previous = type(self).objects.using(using).get(pk=self.pk)
+                if previous.transaction_id != self.transaction_id:
+                    raise ValidationError(
+                        _("An inventory line cannot be moved to another transaction.")
+                    )
+            parent = (
+                InventoryTransaction.objects.using(using)
+                .select_for_update()
+                .get(pk=self.transaction_id)
+            )
+            if parent.posted or (
+                not self._state.adding
+                and type(self)
+                .objects.using(using)
+                .filter(pk=self.pk, transaction__posted=True)
+                .exists()
+            ):
+                raise ValidationError(
+                    _("Lines of posted inventory transactions cannot be changed.")
+                )
+            self.full_clean()
+            super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        using = kwargs.get("using") or self._state.db or "default"
+        with transaction.atomic(using=using):
+            current = type(self).objects.using(using).get(pk=self.pk)
+            parent = (
+                InventoryTransaction.objects.using(using)
+                .select_for_update()
+                .get(pk=current.transaction_id)
+            )
+            if parent.posted:
+                raise ValidationError(
+                    _("Lines of posted inventory transactions cannot be deleted.")
+                )
+            return super().delete(*args, **kwargs)

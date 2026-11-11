@@ -58,6 +58,10 @@ with permission to manage the app's models.
    material's stock unit. A line may also reference a lot of that material.
    To use a different unit, first convert the amount to the material's stock
    unit before entering it.
+   Post the transaction from its admin list after entering its lines. Drafts do
+   not affect stock. Posted transactions and lines cannot be changed or deleted
+   through the app; record corrections as new transactions. In Python, call
+   `transaction.post()` after saving its lines.
 4. Create a **Blueprint** for a repeatable output, and add its material
    requirements in the inline form. Each requirement is the amount needed for
    one run, in that material's stock unit. The admin shows stock balances,
