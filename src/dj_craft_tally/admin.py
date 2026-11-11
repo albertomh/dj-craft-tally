@@ -28,6 +28,29 @@ from dj_craft_tally.models import (
 )
 
 
+def format_quantity(
+    value: Decimal | None, unit: Unit, *, include_unit_code: bool = False
+):
+    """Render a quantity using the display precision of its unit."""
+    if value is None:
+        return None
+
+    places = unit.display_decimal_places
+    with localcontext() as context:
+        context.prec = max(context.prec, len(value.as_tuple().digits) + places + 1)
+        rounded = value.quantize(Decimal(1).scaleb(-places), rounding=ROUND_HALF_UP)
+    if not rounded:
+        rounded = rounded.copy_abs()
+    shown = formats.number_format(rounded, decimal_pos=places, use_l10n=True)
+    if include_unit_code and unit.code != "item":
+        shown = f"{shown} {unit.code}"
+    return format_html(
+        '<span title="{}">{}</span>',
+        _("Exact: %(value)s") % {"value": value},
+        shown,
+    )
+
+
 class BlueprintMaterialRequirementForm(ModelForm):
     class Meta:
         model = BlueprintMaterialRequirement
@@ -84,11 +107,11 @@ class BlueprintAdmin(admin.ModelAdmin):
         "name",
         "workshop",
         "output_name",
-        "output_quantity",
-        "output_unit",
+        "display_output_quantity",
         "available_runs",
-        "available_output",
+        "display_available_output",
     )
+    list_select_related: ClassVar = ("output_unit",)
     list_filter: ClassVar = ("workshop",)
     search_fields: ClassVar = ("name", "output_name")
     formfield_overrides: ClassVar = {
@@ -96,6 +119,18 @@ class BlueprintAdmin(admin.ModelAdmin):
             "widget": Textarea(attrs={"rows": 2, "style": "min-width: 500px;"})
         },
     }
+
+    @admin.display(description=_("Output quantity"), ordering="output_quantity")
+    def display_output_quantity(self, obj):
+        return format_quantity(
+            obj.output_quantity, obj.output_unit, include_unit_code=True
+        )
+
+    @admin.display(description=_("Available output"))
+    def display_available_output(self, obj):
+        return format_quantity(
+            obj.available_output(), obj.output_unit, include_unit_code=True
+        )
 
 
 @admin.register(Unit)
@@ -126,26 +161,14 @@ class WorkshopMembershipAdmin(admin.ModelAdmin):
 
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("name", "workshop", "unit", "display_stock_balance")
+    list_display: ClassVar = ("name", "workshop", "display_stock_balance")
     list_select_related: ClassVar = ("unit",)
     list_filter: ClassVar = ("workshop",)
     search_fields: ClassVar = ("name",)
 
     @admin.display(description=_("Stock balance"))
     def display_stock_balance(self, obj):
-        balance = obj.stock_balance()
-        places = obj.unit.display_decimal_places
-        with localcontext() as context:
-            context.prec = max(context.prec, len(balance.as_tuple().digits) + places + 1)
-            rounded = balance.quantize(Decimal(1).scaleb(-places), rounding=ROUND_HALF_UP)
-        if not rounded:
-            rounded = rounded.copy_abs()
-        shown = formats.number_format(rounded, decimal_pos=places, use_l10n=True)
-        return format_html(
-            '<span title="{}">{}</span>',
-            _("Exact: %(value)s") % {"value": balance},
-            shown,
-        )
+        return format_quantity(obj.stock_balance(), obj.unit, include_unit_code=True)
 
 
 @admin.register(MaterialLot)
@@ -154,11 +177,18 @@ class MaterialLotAdmin(admin.ModelAdmin):
         "reference",
         "material",
         "package_count",
-        "quantity_per_package",
+        "display_quantity_per_package",
         "supplier",
     )
+    list_select_related: ClassVar = ("material__unit",)
     list_filter: ClassVar = ("material",)
     search_fields: ClassVar = ("reference", "supplier", "material__name")
+
+    @admin.display(description=_("Quantity per package"), ordering="quantity_per_package")
+    def display_quantity_per_package(self, obj):
+        return format_quantity(
+            obj.quantity_per_package, obj.material.unit, include_unit_code=True
+        )
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -212,6 +242,15 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(ProjectStatusChange)
 class ProjectStatusChangeAdmin(admin.ModelAdmin):
+    list_display: ClassVar = (
+        "project",
+        "previous_status",
+        "status",
+        "occurred_at",
+        "notes",
+    )
+    list_filter: ClassVar = ("status",)
+    list_select_related: ClassVar = ("project",)
     readonly_fields: ClassVar = (
         "project",
         "previous_status",
@@ -240,14 +279,15 @@ class ProjectStepMeasurementInline(admin.TabularInline):
 class ProjectStepAdmin(admin.ModelAdmin):
     inlines: ClassVar = (ProjectStepMeasurementInline,)
     list_display: ClassVar = (
+        "project",
         "sequence",
         "name",
         "reference",
-        "project",
         "equipment",
         "outcome",
         "occurred_at",
     )
+    list_select_related: ClassVar = ("project", "equipment")
     list_filter: ClassVar = ("outcome", "equipment")
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
@@ -261,8 +301,12 @@ class InventoryTransactionLineInline(admin.TabularInline):
     model = InventoryTransactionLine
     can_delete = False
     extra = 0
-    fields: ClassVar = ("material", "material_lot", "quantity", "notes")
+    fields: ClassVar = ("material", "material_lot", "display_quantity", "notes")
     readonly_fields: ClassVar = fields
+
+    @admin.display(description=_("Quantity"))
+    def display_quantity(self, obj):
+        return format_quantity(obj.quantity, obj.material.unit, include_unit_code=True)
 
     def has_add_permission(self, request, obj=None) -> bool:
         return False
@@ -286,6 +330,7 @@ class InventoryTransactionAdmin(admin.ModelAdmin):
         "reference",
         "posted",
     )
+    list_select_related: ClassVar = ("workshop", "project", "project_step")
     list_filter: ClassVar = ("workshop", "kind")
 
     @admin.action(description="Post selected draft transactions")
@@ -306,16 +351,34 @@ class InventoryTransactionAdmin(admin.ModelAdmin):
             False if obj and obj.posted else super().has_delete_permission(request, obj)
         )
 
-    def get_actions(self, request):
-        actions = super().get_actions(request)
+    def get_actions(self, request, action_location=None):
+        if action_location is None:
+            actions = super().get_actions(request)
+        else:
+            actions = super().get_actions(request, action_location=action_location)
         actions.pop("delete_selected", None)
         return actions
 
 
 @admin.register(InventoryTransactionLine)
 class InventoryTransactionLineAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("transaction", "material", "material_lot", "quantity")
+    list_display: ClassVar = (
+        "transaction",
+        "material",
+        "material_lot",
+        "display_quantity",
+    )
+    list_select_related: ClassVar = ("transaction", "material", "material_lot")
     list_filter: ClassVar = ("material",)
+    ordering: ClassVar = (
+        "-transaction__occurred_at",
+        "-transaction__recorded_at",
+        "id",
+    )
+
+    @admin.display(description=_("Quantity"), ordering="quantity")
+    def display_quantity(self, obj):
+        return format_quantity(obj.quantity, obj.material.unit, include_unit_code=True)
 
     def get_readonly_fields(self, request, obj=None):
         if obj and obj.transaction.posted:
@@ -329,7 +392,10 @@ class InventoryTransactionLineAdmin(admin.ModelAdmin):
             else super().has_delete_permission(request, obj)
         )
 
-    def get_actions(self, request):
-        actions = super().get_actions(request)
+    def get_actions(self, request, action_location=None):
+        if action_location is None:
+            actions = super().get_actions(request)
+        else:
+            actions = super().get_actions(request, action_location=action_location)
         actions.pop("delete_selected", None)
         return actions
