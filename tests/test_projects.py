@@ -1,6 +1,9 @@
 import pytest
+from django.contrib import admin
 from django.core.exceptions import ValidationError
+from django.test import RequestFactory
 
+import dj_craft_tally.admin as tally_admin
 from dj_craft_tally.models import Blueprint, Project, Unit, Workshop
 
 
@@ -29,3 +32,21 @@ def test_project_rejects_foreign_workshop_blueprint() -> None:
         Project.objects.create(
             name="Bad", workshop=Workshop.objects.create(name="Home"), blueprint=blueprint
         )
+
+
+@pytest.mark.django_db
+def test_project_status_history_entries_cannot_be_changed() -> None:
+    project = Project.objects.create(
+        name="Tray", workshop=Workshop.objects.create(name="Home")
+    )
+    change = project.status_changes.first()
+    change.notes = "Changed"
+    with pytest.raises(ValidationError, match="cannot be changed"):
+        change.save()
+
+
+def test_project_status_history_inline_cannot_add_records():
+    request = RequestFactory().get("/")
+    assert not tally_admin.ProjectStatusChangeInline(
+        Project, admin.site
+    ).has_add_permission(request)
