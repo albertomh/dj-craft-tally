@@ -37,7 +37,7 @@ extension here.
 
 ## Supported versions and tooling
 
-- Develop against Python 3.14 and Django 6.1 by default. The authoritative
+- Develop against Python 3.15 and Django 6.1 by default. The authoritative
   supported-version matrix remains `pyproject.toml`.
 - Use `uv` for dependencies and commands. Do not hand-edit `uv.lock`.
 - Tests use `pytest`; the project aims for 100% coverage. Run the focused tests
@@ -83,7 +83,9 @@ human-readable release tag in a trailing comment. Do not use mutable version tag
 ## Git
 
 Keep commits small and single-purpose. Write conventional commit messages.
-When Codex creates a commit, include:
+When an LLM or agent creates a commit, include a `Co-authored-by` git trailer.
+
+eg. when Codex creates a commit:
 
 ```text
 Co-authored-by: Codex <codex@openai.com>

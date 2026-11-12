@@ -4,11 +4,11 @@ import nox
 
 # <https://www.djangoproject.com/download/#:~:text=Supported%20Versions>
 SUPPORTED = {
-    "3.10": ("5.2",),
     "3.11": ("5.2",),
     "3.12": ("5.2", "6.0", "6.1"),
     "3.13": ("5.2", "6.0", "6.1"),
     "3.14": ("6.0", "6.1"),
+    "3.15": ("6.1",),
 }
 
 MATRIX = [(python, django) for python, djangos in SUPPORTED.items() for django in djangos]
