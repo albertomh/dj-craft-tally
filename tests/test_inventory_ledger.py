@@ -57,3 +57,18 @@ def test_material_unit_cannot_change_after_inventory_use(workshop, material) -> 
 
     with pytest.raises(ValidationError, match="cannot change"):
         material.save()
+
+
+@pytest.mark.django_db
+def test_material_unit_queryset_mutations_are_rejected(workshop, material) -> None:
+    kilogram = Unit.objects.get(code="kg")
+
+    with pytest.raises(
+        ValidationError, match="must be changed through the model instance"
+    ):
+        Material.objects.filter(pk=material.pk).update(unit=kilogram)
+    material.unit = kilogram
+    with pytest.raises(
+        ValidationError, match="must be changed through the model instance"
+    ):
+        Material.objects.bulk_update([material], ["unit"])
