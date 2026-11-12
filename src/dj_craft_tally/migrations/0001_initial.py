@@ -10,7 +10,13 @@ def add_initial_units(apps, schema_editor):
     unit = apps.get_model("crafttally", "Unit")
     unit.objects.bulk_create(
         [
-            unit(code="item", name="Item", symbol="item", dimension="count"),
+            unit(
+                code="item",
+                name="Item",
+                symbol="item",
+                dimension="count",
+                display_decimal_places=0,
+            ),
             unit(code="g", name="Gram", symbol="g", dimension="mass"),
             unit(
                 code="kg",
@@ -119,6 +125,14 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
+                    "display_decimal_places",
+                    models.PositiveSmallIntegerField(
+                        default=2,
+                        help_text="Decimal places used when displaying quantities in this unit.",
+                        validators=[django.core.validators.MaxValueValidator(6)],
+                    ),
+                ),
+                (
                     "scale_to_base",
                     models.DecimalField(
                         decimal_places=6,
@@ -137,6 +151,10 @@ class Migration(migrations.Migration):
             options={
                 "ordering": ("dimension", "scale_to_base", "name"),
                 "constraints": [
+                    models.CheckConstraint(
+                        condition=models.Q(("display_decimal_places__lte", 6)),
+                        name="unit_display_decimal_places_within_range",
+                    ),
                     models.UniqueConstraint(
                         fields=("dimension", "symbol"),
                         name="unique_unit_dimension_symbol",

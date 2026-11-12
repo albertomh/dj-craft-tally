@@ -1,7 +1,11 @@
+from decimal import ROUND_HALF_UP, Decimal, localcontext
 from typing import ClassVar
 
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
+from django.utils import formats
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 
 from dj_craft_tally.models import (
     Blueprint,
@@ -44,7 +48,13 @@ class BlueprintAdmin(admin.ModelAdmin):
 
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("symbol", "name", "dimension", "scale_to_base")
+    list_display: ClassVar = (
+        "symbol",
+        "name",
+        "dimension",
+        "scale_to_base",
+        "display_decimal_places",
+    )
     list_filter: ClassVar = ("dimension",)
     search_fields: ClassVar = ("code", "name", "symbol")
 
@@ -64,9 +74,26 @@ class WorkshopMembershipAdmin(admin.ModelAdmin):
 
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("name", "workshop", "unit", "stock_balance")
+    list_display: ClassVar = ("name", "workshop", "unit", "display_stock_balance")
+    list_select_related: ClassVar = ("unit",)
     list_filter: ClassVar = ("workshop",)
     search_fields: ClassVar = ("name",)
+
+    @admin.display(description=_("Stock balance"))
+    def display_stock_balance(self, obj):
+        balance = obj.stock_balance()
+        places = obj.unit.display_decimal_places
+        with localcontext() as context:
+            context.prec = max(context.prec, len(balance.as_tuple().digits) + places + 1)
+            rounded = balance.quantize(Decimal(1).scaleb(-places), rounding=ROUND_HALF_UP)
+        if not rounded:
+            rounded = rounded.copy_abs()
+        shown = formats.number_format(rounded, decimal_pos=places, use_l10n=True)
+        return format_html(
+            '<span title="{}">{}</span>',
+            _("Exact: %(value)s") % {"value": balance},
+            shown,
+        )
 
 
 @admin.register(MaterialLot)

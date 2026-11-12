@@ -71,6 +71,9 @@ with permission to manage the app's models.
    one run, in that material's stock unit. The admin shows stock balances,
    complete available runs, and the resulting output. Capacity is unknown when
    a blueprint has no requirements; it does not reserve stock for other work.
+   Each unit's display decimal places control how its stock balance is rounded
+   in admin. Hover over a balance to see the exact value; stored quantities and
+   capacity calculations retain their full precision.
 5. Create a **Project**, optionally linked to a blueprint in the same workshop.
    Record work as ordered **Project steps**, with optional equipment and
    measurements. Change the project status as work progresses; status changes

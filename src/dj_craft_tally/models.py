@@ -408,6 +408,11 @@ class Unit(models.Model):
     name = models.CharField(max_length=100)
     symbol = models.CharField(max_length=16)
     dimension = models.CharField(max_length=16, choices=Dimension)
+    display_decimal_places = models.PositiveSmallIntegerField(
+        default=2,
+        validators=[MaxValueValidator(QUANTITY_DECIMAL_PLACES)],
+        help_text=_("Decimal places used when displaying quantities in this unit."),
+    )
     scale_to_base = models.DecimalField(
         max_digits=QUANTITY_MAX_DIGITS,
         decimal_places=QUANTITY_DECIMAL_PLACES,
@@ -422,6 +427,10 @@ class Unit(models.Model):
     class Meta:
         ordering = ("dimension", "scale_to_base", "name")
         constraints = (
+            models.CheckConstraint(
+                condition=models.Q(display_decimal_places__lte=QUANTITY_DECIMAL_PLACES),
+                name="unit_display_decimal_places_within_range",
+            ),
             models.UniqueConstraint(
                 fields=["dimension", "symbol"], name="unique_unit_dimension_symbol"
             ),
