@@ -13,11 +13,7 @@ from dj_craft_tally.models import (
 
 
 @pytest.mark.django_db
-def test_inventory_line_tracks_signed_stock_movement() -> None:
-    workshop = Workshop.objects.create(name="Home")
-    material = Material.objects.create(
-        name="PLA", unit=Unit.objects.get(code="g"), workshop=workshop
-    )
+def test_inventory_line_tracks_signed_stock_movement(workshop, material) -> None:
     transaction = InventoryTransaction.objects.create(
         workshop=workshop,
         kind=InventoryTransaction.Kind.CONSUME,
@@ -30,15 +26,15 @@ def test_inventory_line_tracks_signed_stock_movement() -> None:
 
 
 @pytest.mark.django_db
-def test_inventory_line_rejects_foreign_workshop_material() -> None:
+def test_inventory_line_rejects_foreign_workshop_material(workshop, gram) -> None:
     transaction = InventoryTransaction.objects.create(
-        workshop=Workshop.objects.create(name="Home"),
+        workshop=workshop,
         kind=InventoryTransaction.Kind.CONSUME,
         occurred_at="2026-01-01T12:00Z",
     )
     material = Material.objects.create(
         name="PLA",
-        unit=Unit.objects.get(code="g"),
+        unit=gram,
         workshop=Workshop.objects.create(name="Other"),
     )
     with pytest.raises(ValidationError, match="transaction's workshop"):
@@ -48,11 +44,7 @@ def test_inventory_line_rejects_foreign_workshop_material() -> None:
 
 
 @pytest.mark.django_db
-def test_material_unit_cannot_change_after_inventory_use() -> None:
-    workshop = Workshop.objects.create(name="Home")
-    material = Material.objects.create(
-        name="PLA", unit=Unit.objects.get(code="g"), workshop=workshop
-    )
+def test_material_unit_cannot_change_after_inventory_use(workshop, material) -> None:
     transaction = InventoryTransaction.objects.create(
         workshop=workshop,
         kind=InventoryTransaction.Kind.RECEIVE,

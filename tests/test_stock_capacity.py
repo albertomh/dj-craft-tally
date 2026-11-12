@@ -27,6 +27,7 @@ def test_balances_and_complete_blueprint_runs(
         InventoryTransactionLine.objects.create(
             transaction=movement, material=stock_material, quantity=quantity
         )
+        movement.post()
     BlueprintMaterialRequirement.objects.create(
         blueprint=blueprint, material=clay, quantity=Decimal("20")
     )
@@ -43,4 +44,5 @@ def test_balances_and_complete_blueprint_runs(
     InventoryTransactionLine.objects.create(
         transaction=movement, material=glaze, quantity=-20
     )
+    movement.post()
     assert blueprint.available_runs() == 0
