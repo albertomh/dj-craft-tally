@@ -281,6 +281,7 @@ class Equipment(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        verbose_name_plural = _("Equipment")
         ordering = ("name",)
         constraints = (
             models.UniqueConstraint(
@@ -474,6 +475,9 @@ class Project(models.Model):
     class Meta:
         ordering = ("status", "name")
 
+    def __str__(self) -> str:
+        return self.name
+
     def clean(self) -> None:
         super().clean()
         if self.blueprint_id and self.blueprint.workshop_id != self.workshop_id:
@@ -538,6 +542,12 @@ class ProjectStatusChange(models.Model):
         ordering = ("occurred_at", "recorded_at")
         indexes = (models.Index(fields=["project", "occurred_at"]),)
 
+    def __str__(self) -> str:
+        transition = self.get_status_display()
+        if self.previous_status:
+            transition = f"{self.get_previous_status_display()} → {transition}"
+        return f"{self.project}: {transition}"
+
     def save(self, *args, **kwargs) -> None:
         if not self._state.adding:
             raise ValidationError(_("Project status history entries cannot be changed."))
@@ -588,6 +598,9 @@ class ProjectStep(models.Model):
                 fields=["project", "sequence"], name="unique_project_step_sequence"
             ),
         )
+
+    def __str__(self) -> str:
+        return f"{self.project} · {self.sequence}: {self.name}"
 
     def clean(self) -> None:
         super().clean()
@@ -697,6 +710,10 @@ class InventoryTransaction(models.Model):
             models.Index(fields=["occurred_at"], name="crafttally_occurred_at_idx"),
             models.Index(fields=["kind"]),
         )
+
+    def __str__(self) -> str:
+        identifier = self.reference or self.occurred_at.strftime("%Y-%m-%d %H:%M")
+        return f"{self.get_kind_display()} — {identifier}"
 
     def clean(self) -> None:
         super().clean()

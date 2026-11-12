@@ -10,7 +10,7 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
 INSTALLED_APPS = [
     "demo_project",
     "dj_craft_tally",
-    "django.contrib.admin",
+    "dj_craft_tally.admin_apps.CustomAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",

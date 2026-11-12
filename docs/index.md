@@ -30,8 +30,13 @@ Add the app to your host project's `INSTALLED_APPS`:
 INSTALLED_APPS = [
     # ... your other apps ...
     "dj_craft_tally",
+    "dj_craft_tally.admin_apps.CustomAdminConfig",
 ]
 ```
+
+`CustomAdminConfig` orders the package's models by their usual workflow in
+Django admin. It replaces `django.contrib.admin` in `INSTALLED_APPS`; do not
+include both.
 
 Then run the migrations from the host project:
 

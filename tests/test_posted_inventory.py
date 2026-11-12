@@ -1,10 +1,11 @@
 from decimal import Decimal
+from http import HTTPStatus
 
 import pytest
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django.utils import timezone
 
 from dj_craft_tally.models import (
@@ -44,20 +45,24 @@ def test_posting_locks_the_transaction_and_its_lines(workshop, material):
 
 
 @pytest.mark.django_db
-def test_inventory_transaction_admin_displays_associated_lines(workshop):
-    request = RequestFactory().get("/")
-    request.user = get_user_model()(is_staff=True, is_superuser=True)
+@override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"])
+def test_inventory_transaction_admin_displays_associated_lines(
+    client, workshop, material
+):
+    user = get_user_model().objects.create_superuser(username="admin", password="test")
     entry = InventoryTransaction.objects.create(
         workshop=workshop, kind="receive", occurred_at="2026-01-01T00:00Z"
     )
-    transaction_admin = admin.site._registry[InventoryTransaction]
-    inline = transaction_admin.get_inline_instances(request, entry)[0]
+    InventoryTransactionLine.objects.create(
+        transaction=entry, material=material, quantity=Decimal("10")
+    )
+    client.force_login(user)
 
-    assert inline.model is InventoryTransactionLine
-    assert inline.fields == ("material", "material_lot", "quantity", "notes")
-    assert inline.readonly_fields == inline.fields
-    assert not inline.has_add_permission(request, entry)
-    assert not inline.has_delete_permission(request, entry)
+    response = client.get(f"/admin/crafttally/inventorytransaction/{entry.pk}/change/")
+
+    assert response.status_code == HTTPStatus.OK
+    assert b"Clay" in response.content
+    assert b">10.00 g</span>" in response.content
 
 
 @pytest.mark.django_db

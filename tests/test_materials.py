@@ -1,9 +1,11 @@
 from decimal import Decimal
 
 import pytest
+from django.contrib import admin
 from django.core.exceptions import ValidationError
+from django.test import RequestFactory
 
-from dj_craft_tally.models import MaterialLot
+from dj_craft_tally.models import Material, MaterialLot
 
 
 @pytest.mark.django_db
@@ -47,3 +49,25 @@ def test_invalid_lot_does_not_record_a_receipt(material):
         )
     assert not MaterialLot.objects.exists()
     assert material.stock_balance() == 0
+
+
+@pytest.mark.django_db
+def test_safe_bulk_mutations_and_lot_bulk_creation_rules(material):
+    Material.objects.filter(pk=material.pk).update(name="Porcelain")
+    material.name = "Stoneware"
+    Material.objects.bulk_update([material], ["name"])
+    lot = MaterialLot.objects.create(material=material, quantity_per_package=1)
+    MaterialLot.objects.filter(pk=lot.pk).update(supplier="Clay Co")
+    lot.supplier = "Another supplier"
+    MaterialLot.objects.bulk_update([lot], ["supplier"])
+    with pytest.raises(ValidationError, match="individually"):
+        MaterialLot.objects.bulk_create([])
+
+
+@pytest.mark.django_db
+def test_material_lot_admin_locks_receipt_fields_after_creation(material):
+    lot = MaterialLot.objects.create(material=material, quantity_per_package=1)
+    lot_admin = admin.site._registry[MaterialLot]
+    request = RequestFactory().get("/")
+    assert "material" in lot_admin.get_readonly_fields(request, lot)
+    assert lot_admin.get_readonly_fields(request) == ()

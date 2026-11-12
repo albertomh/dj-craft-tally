@@ -53,6 +53,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("name",),
+                "verbose_name_plural": "Equipment",
                 "constraints": [
                     models.UniqueConstraint(
                         fields=("workshop", "name"), name="unique_workshop_equipment_name"

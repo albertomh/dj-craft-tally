@@ -36,6 +36,7 @@
     INSTALLED_APPS = [
         ...,
         "dj_craft_tally",
+        "dj_craft_tally.admin_apps.CustomAdminConfig",
         ...,
     ]
     ```
@@ -46,8 +47,10 @@
     python manage.py migrate
     ```
 
-    The initial migration creates a set of common units. Enable Django admin in
-    your host project and use a staff account to manage the app's records.
+    The initial migration creates a set of common units. The custom admin config
+    orders `dj-craft-tally` models by their usual workflow. It replaces, rather
+    than accompanies, `django.contrib.admin` in `INSTALLED_APPS`. Enable Django
+    admin in your host project and use a staff account to manage the app's records.
 
 ## Features
 
