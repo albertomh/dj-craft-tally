@@ -1,7 +1,7 @@
 # dj-craft-tally
 
 <!-- markdownlint-disable MD013 line-length -->
-![python >= 3.10](https://img.shields.io/badge/Python>=3.10-4584b6?logo=python&logoColor=ffde57&style=flat-square)
+![python >= 3.11](https://img.shields.io/badge/Python>=3.11-4584b6?logo=python&logoColor=ffde57&style=flat-square)
 [![Django >= 5.2](https://img.shields.io/badge/Django>=5.2-092E20?logo=django&logoColor=ffffff&style=flat-square)](https://docs.djangoproject.com/en/stable/)
 [![prek](https://img.shields.io/badge/prek-CC5A23?logo=prek&logoColor=FFFFFF&style=flat-square)](https://github.com/j178/prek)
 [![pytest](https://img.shields.io/badge/pytest-0A9EDC?logo=pytest&logoColor=white&style=flat-square)](https://github.com/pytest-dev/pytest)
@@ -78,7 +78,7 @@ all supported Python/Django pairings (see [`noxfile.py`](./noxfile.py#L5)).
 
 ```sh
 # run latest supported Python/Django pairing only
-# (eg. Python 3.14 / Django 6.1)
+# (eg. Python 3.15 / Django 6.1)
 uvx nox
 
 # run all test sessions (ie. all supported Python/Django pairings)

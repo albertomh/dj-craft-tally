@@ -8,9 +8,10 @@ it does not provide a standalone site.
 
 | Python | Django |
 | --- | --- |
-| 3.10–3.11 | 5.2 |
+| 3.11 | 5.2 |
 | 3.12–3.13 | 5.2, 6.0, 6.1 |
 | 3.14 | 6.0, 6.1 |
+| 3.15 | 6.1 |
 
 ## Installation
 
