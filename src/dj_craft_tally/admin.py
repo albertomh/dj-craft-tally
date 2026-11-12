@@ -243,14 +243,15 @@ class ProjectAdmin(admin.ModelAdmin):
 @admin.register(ProjectStatusChange)
 class ProjectStatusChangeAdmin(admin.ModelAdmin):
     list_display: ClassVar = (
+        "occurred_at",
         "project",
         "previous_status",
         "status",
-        "occurred_at",
         "notes",
     )
     list_filter: ClassVar = ("status",)
     list_select_related: ClassVar = ("project",)
+    ordering: ClassVar = ("-occurred_at",)
     readonly_fields: ClassVar = (
         "project",
         "previous_status",
