@@ -56,6 +56,8 @@ with permission to manage the app's models.
    line** linked to it and the material. Quantities are signed: for example,
    enter `500` for stock received or `-42.5` for stock consumed, in the
    material's stock unit. A line may also reference a lot of that material.
+   To use a different unit, first convert the amount to the material's stock
+   unit before entering it.
 4. Create a **Blueprint** for a repeatable output, and add its material
    requirements in the inline form. Each requirement is the amount needed for
    one run, in that material's stock unit.

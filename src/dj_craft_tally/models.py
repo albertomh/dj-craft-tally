@@ -249,6 +249,7 @@ class BlueprintMaterialRequirement(models.Model):
     quantity = models.DecimalField(
         max_digits=QUANTITY_MAX_DIGITS,
         decimal_places=QUANTITY_DECIMAL_PLACES,
+        help_text=_("Quantity in the material's stock unit."),
         validators=[MinValueValidator(Decimal("0.000001"))],
     )
     notes = models.TextField(blank=True)
@@ -608,7 +609,9 @@ class InventoryTransactionLine(models.Model):
         related_name="inventory_lines",
     )
     quantity = models.DecimalField(
-        max_digits=QUANTITY_MAX_DIGITS, decimal_places=QUANTITY_DECIMAL_PLACES
+        max_digits=QUANTITY_MAX_DIGITS,
+        decimal_places=QUANTITY_DECIMAL_PLACES,
+        help_text=_("Quantity in the material's stock unit."),
     )
     notes = models.TextField(blank=True)
 
