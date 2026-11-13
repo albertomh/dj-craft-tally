@@ -136,9 +136,3 @@ exclude_lines = [
 source = ["dj_craft_tally"]
 parallel = true
 concurrency = ["multiprocessing"]
-
-[[tool.uv.index]]
-name = "testpypi"
-url = "https://test.pypi.org/simple/"
-publish-url = "https://test.pypi.org/legacy/"
-explicit = true
