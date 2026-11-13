@@ -1,7 +1,7 @@
 # https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
 [project]
 name = "dj-craft-tally"
-version = "0.0.0"
+version = "0.1.0"
 description = "A Django app to help makers track projects and inventory in their workshop."
 readme = "README.md"
 keywords = ["Django", "craft", "tally", "inventory", "workshop"]
