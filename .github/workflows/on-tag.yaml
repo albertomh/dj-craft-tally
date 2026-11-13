@@ -13,11 +13,11 @@ jobs:
   checks:
     uses: ./.github/workflows/_checks.yaml
 
-  publish:
+  publish-pypi:
     needs: checks
     runs-on: ubuntu-26.04
     environment:
-      name: testpypi
+      name: pypi
     permissions:
       id-token: write
       contents: read
@@ -25,5 +25,3 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/publish
-        with:
-          uv_publish_url: https://test.pypi.org/legacy/
