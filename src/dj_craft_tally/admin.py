@@ -1,4 +1,4 @@
-from decimal import ROUND_HALF_UP, Decimal, localcontext
+from decimal import Decimal
 from typing import ClassVar
 
 from django.contrib import admin, messages
@@ -6,10 +6,11 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.forms import ModelForm
 from django.forms.widgets import Textarea
-from django.utils import formats
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
+from dj_craft_tally.display import format_quantity
 from dj_craft_tally.models import (
     Blueprint,
     BlueprintMaterialRequirement,
@@ -26,29 +27,6 @@ from dj_craft_tally.models import (
     Workshop,
     WorkshopMembership,
 )
-
-
-def format_quantity(
-    value: Decimal | None, unit: Unit, *, include_unit_code: bool = False
-):
-    """Render a quantity using the display precision of its unit."""
-    if value is None:
-        return None
-
-    places = unit.display_decimal_places
-    with localcontext() as context:
-        context.prec = max(context.prec, len(value.as_tuple().digits) + places + 1)
-        rounded = value.quantize(Decimal(1).scaleb(-places), rounding=ROUND_HALF_UP)
-    if not rounded:
-        rounded = rounded.copy_abs()
-    shown = formats.number_format(rounded, decimal_pos=places, use_l10n=True)
-    if include_unit_code and unit.code != "item":
-        shown = f"{shown} {unit.code}"
-    return format_html(
-        '<span title="{}">{}</span>',
-        _("Exact: %(value)s") % {"value": value},
-        shown,
-    )
 
 
 class BlueprintMaterialRequirementForm(ModelForm):
@@ -227,6 +205,10 @@ class ProjectStatusChangeInline(admin.TabularInline):
         "recorded_at",
         "notes",
     )
+    # ``sortable_by`` only applies to changelists, not tabular inlines. Keep
+    # the immutable history useful on the project change view by showing the
+    # newest transition first instead.
+    ordering: ClassVar = ("-occurred_at", "-recorded_at")
 
     def has_add_permission(self, request, obj=None) -> bool:
         return False
@@ -244,7 +226,7 @@ class ProjectAdmin(admin.ModelAdmin):
 class ProjectStatusChangeAdmin(admin.ModelAdmin):
     list_display: ClassVar = (
         "occurred_at",
-        "project",
+        "project_link",
         "previous_status",
         "status",
         "notes",
@@ -260,6 +242,14 @@ class ProjectStatusChangeAdmin(admin.ModelAdmin):
         "recorded_at",
         "notes",
     )
+
+    @admin.display(description=_("Project"))
+    def project_link(self, obj):
+        project = obj.project
+        if project:
+            url = reverse("admin:crafttally_project_change", args=(project.pk,))
+            return format_html(r'<a href="{}">{}</a>', url, project)
+        return "-"
 
     def has_add_permission(self, request) -> bool:
         return False
@@ -326,13 +316,21 @@ class InventoryTransactionAdmin(admin.ModelAdmin):
         "occurred_at",
         "workshop",
         "kind",
-        "project",
+        "project_link",
         "project_step",
         "reference",
         "posted",
     )
     list_select_related: ClassVar = ("workshop", "project", "project_step")
     list_filter: ClassVar = ("workshop", "kind")
+
+    @admin.display(description=_("Project"))
+    def project_link(self, obj):
+        project = obj.project
+        if project:
+            url = reverse("admin:crafttally_project_change", args=(project.pk,))
+            return format_html(r'<a href="{}">{}</a>', url, project)
+        return "-"
 
     @admin.action(description="Post selected draft transactions")
     def post_transactions(self, request, queryset):
@@ -365,8 +363,9 @@ class InventoryTransactionAdmin(admin.ModelAdmin):
 class InventoryTransactionLineAdmin(admin.ModelAdmin):
     list_display: ClassVar = (
         "transaction",
-        "material",
+        "material_link",
         "material_lot",
+        "project_link",
         "display_quantity",
     )
     list_select_related: ClassVar = ("transaction", "material", "material_lot")
@@ -376,6 +375,20 @@ class InventoryTransactionLineAdmin(admin.ModelAdmin):
         "-transaction__recorded_at",
         "id",
     )
+
+    @admin.display(description=_("Material"))
+    def material_link(self, obj):
+        material = obj.material
+        url = reverse("admin:crafttally_material_change", args=(material.pk,))
+        return format_html(r'<a href="{}">{}</a>', url, material)
+
+    @admin.display(description=_("Project"))
+    def project_link(self, obj):
+        project = obj.transaction.project
+        if project:
+            url = reverse("admin:crafttally_project_change", args=(project.pk,))
+            return format_html(r'<a href="{}">{}</a>', url, project)
+        return "-"
 
     @admin.display(description=_("Quantity"), ordering="quantity")
     def display_quantity(self, obj):

@@ -1,5 +1,6 @@
 import pytest
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 
@@ -50,3 +51,26 @@ def test_project_status_history_inline_cannot_add_records():
     assert not tally_admin.ProjectStatusChangeInline(
         Project, admin.site
     ).has_add_permission(request)
+
+
+@pytest.mark.django_db
+def test_project_status_history_inline_orders_newest_first():
+    project = Project.objects.create(
+        name="Tray",
+        workshop=Workshop.objects.create(name="Home"),
+        created_at="2026-01-01T00:00Z",
+    )
+    project.set_status(Project.Status.ACTIVE, occurred_at="2026-01-02T00:00Z")
+    project.set_status(Project.Status.COMPLETE, occurred_at="2026-01-03T00:00Z")
+    request = RequestFactory().get("/")
+    request.user = get_user_model()(is_staff=True, is_superuser=True)
+
+    changes = tally_admin.ProjectStatusChangeInline(Project, admin.site).get_queryset(
+        request
+    )
+
+    assert list(changes.filter(project=project).values_list("status", flat=True)) == [
+        Project.Status.COMPLETE,
+        Project.Status.ACTIVE,
+        Project.Status.PLANNED,
+    ]
