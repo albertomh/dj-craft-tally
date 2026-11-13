@@ -9,8 +9,10 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
+from dj_craft_tally.display import format_quantity
 from dj_craft_tally.identifiers import uuid7
 
 QUANTITY_MAX_DIGITS = 15
@@ -118,6 +120,11 @@ class Material(models.Model):
             .iterator(),
             Decimal(0),
         )
+
+    @cached_property
+    def display_stock_balance(self) -> str:
+        """Return a formatted quantity string with unit code."""
+        return format_quantity(self.stock_balance(), self.unit, include_unit_code=True)
 
     def save(self, *args, **kwargs) -> None:
         unit_is_being_saved = kwargs.get("update_fields") is None or bool(
@@ -713,7 +720,7 @@ class InventoryTransaction(models.Model):
 
     def __str__(self) -> str:
         identifier = self.reference or self.occurred_at.strftime("%Y-%m-%d %H:%M")
-        return f"{self.get_kind_display()} — {identifier}"
+        return f"{self.get_kind_display()} | {identifier}"
 
     def clean(self) -> None:
         super().clean()
