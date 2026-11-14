@@ -54,25 +54,25 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
         }
         assert connection.execute(
             "select count(*) from crafttally_inventory_tx"
-        ).fetchone()[0] == (5 if "posted" in tx_fields else 4)
+        ).fetchone()[0] == (7 if "posted" in tx_fields else 6)
         if "posted" in tx_fields:
             assert (
                 connection.execute(
                     "select count(*) from crafttally_inventory_tx where posted = 1"
                 ).fetchone()[0]
-                == 4  # noqa: PLR2004
+                == 6  # noqa: PLR2004
             )
         assert (
             connection.execute(
                 "select count(*) from crafttally_inventory_tx_line "
                 "where transaction_id = (select id from crafttally_inventory_tx "
-                "where reference = 'Prototype production run')"
+                "where reference = 'Herb planter assembly')"
             ).fetchone()[0]
             == 3  # noqa: PLR2004
         )
         assert (
             connection.execute("select count(*) from crafttally_project").fetchone()[0]
-            == 1
+            == 2  # noqa: PLR2004
         )
         line_fields = {
             row[1]
@@ -92,7 +92,7 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
             connection.execute(
                 "select quantity from crafttally_blueprint_material_req "
                 "where material_id = (select id from crafttally_material "
-                "where name = 'Blue PLA filament')"
+                "where name = 'Birch plywood')"
             ).fetchone()[0]
-            == 120  # noqa: PLR2004
+            == 0.24  # noqa: PLR2004
         )
