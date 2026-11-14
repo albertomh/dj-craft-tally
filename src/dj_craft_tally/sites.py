@@ -1,4 +1,5 @@
 from collections import Counter
+from datetime import UTC, datetime
 from typing import ClassVar
 
 from django.contrib import admin
@@ -70,21 +71,27 @@ class CustomAdminSite(admin.AdminSite):
             for status, label in Project.Status.choices
         ]
 
-        blueprints = [
-            {
-                "pk": blueprint.pk,
-                "name": blueprint.name,
-                "runs": blueprint.available_runs(),
-                "output": format_quantity(
-                    blueprint.available_output(),
-                    blueprint.output_unit,
-                    include_unit_code=True,
-                ),
-            }
-            for blueprint in Blueprint.objects.select_related("output_unit").order_by(
-                "name"
-            )[:5]
-        ]
+        # Never-made blueprints sort last; the sort is stable, so ties keep name order.
+        blueprints = sorted(
+            (
+                {
+                    "pk": blueprint.pk,
+                    "name": blueprint.name,
+                    "runs": blueprint.available_runs(),
+                    "output": format_quantity(
+                        blueprint.available_output(),
+                        blueprint.output_unit,
+                        include_unit_code=True,
+                    ),
+                    "last_made": blueprint.last_made(),
+                }
+                for blueprint in Blueprint.objects.select_related("output_unit").order_by(
+                    "name"
+                )
+            ),
+            key=lambda b: b["last_made"] or datetime.min.replace(tzinfo=UTC),
+            reverse=True,
+        )[:5]
 
         return {
             "workshop_count": Workshop.objects.count(),

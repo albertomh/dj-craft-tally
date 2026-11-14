@@ -46,7 +46,7 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
             connection.execute("select count(*) from crafttally_material_lot").fetchone()[
                 0
             ]
-            == 2  # noqa: PLR2004
+            == 5  # noqa: PLR2004
         )
         tx_fields = {
             row[1]
@@ -54,13 +54,13 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
         }
         assert connection.execute(
             "select count(*) from crafttally_inventory_tx"
-        ).fetchone()[0] == (7 if "posted" in tx_fields else 6)
+        ).fetchone()[0] == (12 if "posted" in tx_fields else 6)
         if "posted" in tx_fields:
             assert (
                 connection.execute(
                     "select count(*) from crafttally_inventory_tx where posted = 1"
                 ).fetchone()[0]
-                == 6  # noqa: PLR2004
+                == 11  # noqa: PLR2004
             )
         assert (
             connection.execute(

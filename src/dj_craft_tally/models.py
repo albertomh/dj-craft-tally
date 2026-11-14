@@ -333,7 +333,6 @@ class Blueprint(models.Model):
         return self.name
 
     def available_runs(self) -> int | None:
-        """Return complete runs supported by stock, or None with no requirements."""
         requirements = self.requirements.select_related("material")
         capacities = [
             max(0, int(requirement.material.stock_balance() // requirement.quantity))
@@ -342,9 +341,15 @@ class Blueprint(models.Model):
         return min(capacities) if capacities else None
 
     def available_output(self) -> Decimal | None:
-        """Return output from complete available runs, or None if unspecified."""
         runs = self.available_runs()
         return None if runs is None else runs * self.output_quantity
+
+    def last_made(self) -> datetime | None:
+        return InventoryTransaction.objects.filter(
+            project__blueprint=self,
+            kind=InventoryTransaction.Kind.PRODUCE,
+            posted=True,
+        ).aggregate(last=models.Max("occurred_at"))["last"]
 
 
 class BlueprintMaterialRequirement(models.Model):

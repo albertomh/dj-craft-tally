@@ -6,6 +6,11 @@
 {% block title %}crafttally dashboard{% endblock %}
 {% block extrastyle %}{{ block.super }}
 <style>
+  .ct-mono {
+    font-family: monospace;
+    font-size: 0.7rem;
+  }
+
   .ct-dashboard {
     max-width: 900px;
   }
@@ -239,6 +244,7 @@
           <th>{% translate "Blueprint" %}</th>
           <th class="ct-right">{% translate "Available runs" %}</th>
           <th class="ct-right">{% translate "Available output" %}</th>
+          <th class="ct-right">{% translate "Last made" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -247,6 +253,9 @@
           <td><a href="{% url 'admin:crafttally_blueprint_change' blueprint.pk %}">{{ blueprint.name }}</a></td>
           <td class="ct-right">{% if blueprint.runs is None %}&mdash;{% else %}{{ blueprint.runs }}{% endif %}</td>
           <td class="ct-right">{% if blueprint.output is None %}&mdash;{% else %}{{ blueprint.output|safe }}{% endif %}
+          </td>
+          <td class="ct-right ct-mono">
+            {% if blueprint.last_made %}{{ blueprint.last_made|date:"Y-m-d" }}{% else %}&mdash;{% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -263,7 +272,7 @@
     <table class="ct-table">
       <thead>
         <tr>
-          <th>{% translate "When" %}</th>
+          <th></th>
           <th></th>
           <th>{% translate "Type" %}</th>
           <th>{% translate "Reference" %}</th>
@@ -273,7 +282,7 @@
       <tbody>
         {% for transaction in recent_transactions %}
         <tr>
-          <td>{{ transaction.occurred_at|date:"Y-m-d H:i" }}</td>
+          <td class="ct-mono">{{ transaction.occurred_at|date:"Y-m-d H:i" }}</td>
           <td>{% if not transaction.posted %}<span class="ct-pill">{% translate "Draft" %}</span>{% endif %}</td>
           <td>{{ transaction.get_kind_display }}</td>
           <td>{{ transaction.reference|default:"&mdash;" }}</td>

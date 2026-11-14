@@ -1,7 +1,9 @@
-# ruff: noqa: PLR0915, PLR0917
+# ruff: noqa: S311, PLR0915, PLR0917
 
 """Create reproducible workshop examples for the local demo."""
 
+import random
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -43,6 +45,13 @@ class Command(BaseCommand):
 
         supports_posting = hasattr(InventoryTransaction, "post")
         now = timezone.now()
+
+        def jitter() -> datetime:
+            # Random time 1-48h before now, so `now` stays the latest timestamp.
+            hours_ago = random.randint(1, 48)
+            minutes_ago = random.randint(0, 59)
+            return now - timedelta(hours=hours_ago, minutes=minutes_ago)
+
         admin = user_model.objects.create_superuser("demo", password="demo")  # noqa: S106
         studio = Workshop.objects.create(
             name="Maker Studio", description="Sample 3D printing workshop"
@@ -104,7 +113,7 @@ class Command(BaseCommand):
             supplier="Example Filament Co.",
             package_count=2,
             quantity_per_package=Decimal("1000"),
-            received_at=now,
+            received_at=jitter(),
         )
         bolt_lot = MaterialLot.objects.create(
             material=bolts,
@@ -112,7 +121,7 @@ class Command(BaseCommand):
             supplier="Example Hardware",
             package_count=1,
             quantity_per_package=Decimal("100"),
-            received_at=now,
+            received_at=jitter(),
         )
         plywood_lot = MaterialLot.objects.create(
             material=plywood,
@@ -120,7 +129,7 @@ class Command(BaseCommand):
             supplier="Example Timber",
             package_count=2,
             quantity_per_package=Decimal("10"),
-            received_at=now,
+            received_at=jitter(),
         )
         vinyl_lot = MaterialLot.objects.create(
             material=vinyl,
@@ -128,7 +137,7 @@ class Command(BaseCommand):
             supplier="Example Signs Supply",
             package_count=2,
             quantity_per_package=Decimal("10"),
-            received_at=now,
+            received_at=jitter(),
         )
         fabric_lot = MaterialLot.objects.create(
             material=fabric,
@@ -136,7 +145,7 @@ class Command(BaseCommand):
             supplier="Example Textiles",
             package_count=1,
             quantity_per_package=Decimal("10"),
-            received_at=now,
+            received_at=jitter(),
         )
         lots = {
             pla: pla_lot,
@@ -157,10 +166,16 @@ class Command(BaseCommand):
             step=None,
             post=True,
         ):
+            # The Desk trial batch is the latest transaction; the rest are jittered.
+            if kind == "produce" and reference.startswith("Desk"):
+                occurred_at = now
+            else:
+                occurred_at = jitter()
+
             entry = InventoryTransaction.objects.create(
                 workshop=studio,
                 kind=kind,
-                occurred_at=now,
+                occurred_at=occurred_at,
                 reference=reference,
                 project=project,
                 project_step=step,
@@ -174,14 +189,21 @@ class Command(BaseCommand):
             InventoryTransactionLine.objects.create(**values)
             if supports_posting and post:
                 entry.post()
+            return entry
 
         def multi_line_movement(  # noqa: PLR0913
             kind, reference, lines, *, project=None, step=None, post=True
         ):
+            # The Desk trial batch is the latest transaction; the rest are jittered.
+            if kind == InventoryTransaction.Kind.PRODUCE and reference.startswith("Desk"):
+                occurred_at = now
+            else:
+                occurred_at = jitter()
+
             entry = InventoryTransaction.objects.create(
                 workshop=studio,
                 kind=kind,
-                occurred_at=now,
+                occurred_at=occurred_at,
                 reference=reference,
                 project=project,
                 project_step=step,
@@ -196,13 +218,8 @@ class Command(BaseCommand):
                 )
             if supports_posting and post:
                 entry.post()
+            return entry
 
-        if not pla_lot.inventory_lines.exists():
-            movement(pla, pla_lot, "2000", "receive", "PLA receipt")
-            movement(bolts, bolt_lot, "100", "receive", "Bolt receipt")
-            movement(plywood, plywood_lot, "20", "receive", "Plywood receipt")
-            movement(vinyl, vinyl_lot, "20", "receive", "Vinyl receipt")
-            movement(fabric, fabric_lot, "10", "receive", "Canvas receipt")
         multi_line_movement(
             InventoryTransaction.Kind.RECEIVE,
             "Shared supplies delivery",
@@ -210,6 +227,7 @@ class Command(BaseCommand):
                 (pla, None, "250", "Loose filament added to the shared bin."),
                 (bolts, None, "20", "Spare fasteners added to the shared bin."),
             ],
+            post=False,
         )
 
         # Blueprints
@@ -352,6 +370,7 @@ class Command(BaseCommand):
                 lines,
                 project=done,
                 step=done_step,
+                post=False,
             )
             done.set_status(Project.Status.COMPLETE, notes="Finished and delivered")
 
@@ -385,6 +404,7 @@ class Command(BaseCommand):
             ],
             project=project,
             step=step,
+            post=False,
         )
 
         # Planned projects (3): default status, no steps yet.
@@ -404,7 +424,7 @@ class Command(BaseCommand):
             "pegboard",
         )
 
-        # Completed projects (5)
+        # Completed projects (4). None use the Weekender tote blueprint.
         complete_project(
             "Market stall coasters",
             "Engraved coasters for the weekend market.",
@@ -416,12 +436,6 @@ class Command(BaseCommand):
             "Sticker packs for the laptop-decoration workshop.",
             "stickers",
             "Monthly mail club",
-        )
-        complete_project(
-            "Workshop tote bags",
-            "Tote bags for the workshop members.",
-            "tote",
-            "Member welcome gifts",
         )
         complete_project(
             "Tool wall panel",
@@ -448,6 +462,9 @@ class Command(BaseCommand):
         )
 
         if supports_posting:
+            # Post everything first, then create the draft so it stays a draft.
+            for tx in InventoryTransaction.objects.filter(workshop=studio, posted=False):
+                tx.post()
             movement(
                 pla,
                 pla_lot,

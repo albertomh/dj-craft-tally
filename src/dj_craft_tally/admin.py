@@ -369,7 +369,7 @@ class InventoryTransactionLineAdmin(admin.ModelAdmin):
         "display_quantity",
     )
     list_select_related: ClassVar = ("transaction", "material", "material_lot")
-    list_filter: ClassVar = ("material",)
+    list_filter: ClassVar = ("material", "transaction__project", "transaction__kind")
     ordering: ClassVar = (
         "-transaction__occurred_at",
         "-transaction__recorded_at",
