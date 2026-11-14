@@ -424,7 +424,7 @@ class Command(BaseCommand):
             "pegboard",
         )
 
-        # Completed projects (4). None use the Weekender tote blueprint.
+        # Completed projects (4).
         complete_project(
             "Market stall coasters",
             "Engraved coasters for the weekend market.",

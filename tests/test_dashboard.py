@@ -119,7 +119,7 @@ def test_dashboard_renders(dashboard_site, dashboard_request, workshop, item, gr
 
     assert "Workshop dashboard" in content
     assert "Available output" in content
-    assert "Recent inventory activity" in content
+    assert "Inventory activity" in content
     assert "No inventory movements recorded yet." in content
     assert "Cup" in content
     # Status cards are themed and link to the filtered project changelist.
