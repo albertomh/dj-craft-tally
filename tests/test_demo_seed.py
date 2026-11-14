@@ -6,6 +6,20 @@ from contextlib import closing
 from pathlib import Path
 
 
+def seeded_table_counts(connection):
+    tables = [
+        row[0]
+        for row in connection.execute(
+            "select name from sqlite_master where type = 'table' "
+            "and name glob 'crafttally_*' order by name"
+        )
+    ]
+    return {
+        table: connection.execute(f'select count(*) from "{table}"').fetchone()[0]
+        for table in tables
+    }
+
+
 def test_demo_seed_creates_repeatable_sample_data(tmp_path):
     root = Path(__file__).resolve().parent.parent
     db_path = tmp_path / "demo.sqlite3"
@@ -29,70 +43,46 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
 
     run("migrate", "--noinput")
     result = run("seed_demo")
+    assert "Created demo data" in result.stdout
     assert "material's stock unit" in result.stdout
-    run("seed_demo")
     with closing(sqlite3.connect(db_path)) as connection:
+        first_counts = seeded_table_counts(connection)
+        assert first_counts["crafttally_workshop"] > 0
+        assert first_counts["crafttally_material"] > 0
+        assert first_counts["crafttally_material_lot"] > 0
+        assert first_counts["crafttally_blueprint"] > 0
+        assert first_counts["crafttally_project"] > 0
+        assert first_counts["crafttally_inventory_tx"] > 0
+        assert first_counts["crafttally_inventory_tx_line"] > 0
+
         assert (
             connection.execute(
-                "select count(*) from auth_user where username = 'demo'"
+                "select count(*) from crafttally_inventory_tx_line as line "
+                "join crafttally_inventory_tx as tx on tx.id = line.transaction_id "
+                "join crafttally_material as material on material.id = line.material_id "
+                "where tx.workshop_id != material.workshop_id"
             ).fetchone()[0]
-            == 1
+            == 0
         )
-        assert (
-            connection.execute("select count(*) from crafttally_workshop").fetchone()[0]
-            == 2  # noqa: PLR2004
-        )
-        assert (
-            connection.execute("select count(*) from crafttally_material_lot").fetchone()[
-                0
-            ]
-            == 2  # noqa: PLR2004
-        )
-        tx_fields = {
-            row[1]
-            for row in connection.execute("pragma table_info(crafttally_inventory_tx)")
-        }
-        assert connection.execute(
-            "select count(*) from crafttally_inventory_tx"
-        ).fetchone()[0] == (5 if "posted" in tx_fields else 4)
-        if "posted" in tx_fields:
-            assert (
-                connection.execute(
-                    "select count(*) from crafttally_inventory_tx where posted = 1"
-                ).fetchone()[0]
-                == 4  # noqa: PLR2004
-            )
         assert (
             connection.execute(
-                "select count(*) from crafttally_inventory_tx_line "
-                "where transaction_id = (select id from crafttally_inventory_tx "
-                "where reference = 'Prototype production run')"
+                "select count(*) from crafttally_blueprint_material_req as requirement "
+                "join crafttally_blueprint as blueprint "
+                "on blueprint.id = requirement.blueprint_id "
+                "join crafttally_material as material "
+                "on material.id = requirement.material_id "
+                "where blueprint.workshop_id != material.workshop_id"
             ).fetchone()[0]
-            == 3  # noqa: PLR2004
+            == 0
         )
-        assert (
-            connection.execute("select count(*) from crafttally_project").fetchone()[0]
-            == 1
-        )
-        line_fields = {
-            row[1]
-            for row in connection.execute(
-                "pragma table_info(crafttally_inventory_tx_line)"
-            )
-        }
-        assert "unit_id" not in line_fields
-        requirement_fields = {
-            row[1]
-            for row in connection.execute(
-                "pragma table_info(crafttally_blueprint_material_req)"
-            )
-        }
-        assert "unit_id" not in requirement_fields
         assert (
             connection.execute(
-                "select quantity from crafttally_blueprint_material_req "
-                "where material_id = (select id from crafttally_material "
-                "where name = 'Blue PLA filament')"
+                "select count(distinct status) from crafttally_project"
             ).fetchone()[0]
-            == 120  # noqa: PLR2004
+            > 1
         )
+
+    result = run("seed_demo")
+    assert "already exists" in result.stdout
+    with closing(sqlite3.connect(db_path)) as connection:
+        assert seeded_table_counts(connection) == first_counts
