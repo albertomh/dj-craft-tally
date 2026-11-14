@@ -139,10 +139,14 @@ class WorkshopMembershipAdmin(admin.ModelAdmin):
 
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
-    list_display: ClassVar = ("name", "workshop", "display_stock_balance")
+    list_display: ClassVar = ("name", "kind", "workshop", "display_stock_balance")
     list_select_related: ClassVar = ("unit",)
-    list_filter: ClassVar = ("workshop",)
+    list_filter: ClassVar = ("workshop", "kind")
     search_fields: ClassVar = ("name",)
+    ordering: ClassVar = (
+        "kind",
+        "name",
+    )
 
     @admin.display(description=_("Stock balance"))
     def display_stock_balance(self, obj):

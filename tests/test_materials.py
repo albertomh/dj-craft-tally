@@ -21,6 +21,7 @@ def test_material_lot_records_package_count_and_contents(material) -> None:
     assert line.transaction.posted
     assert line.transaction.kind == "receive"
     assert material.stock_balance() == Decimal("5000")
+    assert ">5000.00 g</span>" in material.display_stock_balance
     lot.supplier = "Supplier"
     lot.save()
     assert lot.inventory_lines.count() == 1

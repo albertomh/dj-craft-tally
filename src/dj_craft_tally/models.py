@@ -92,11 +92,17 @@ class Material(models.Model):
 
     objects = MaterialQuerySet.as_manager()
 
+    class Kind(models.TextChoices):
+        INPUT = "input", _("Input")
+        OUTPUT = "output", _("Output")
+        INTERMEDIATE = "intermediate", _("Intermediate")
+
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     workshop = models.ForeignKey(
         Workshop, on_delete=models.PROTECT, related_name="materials"
     )
     name = models.CharField(max_length=200)
+    kind = models.CharField(max_length=32, choices=Kind, default=Kind.INPUT)
     unit = models.ForeignKey("Unit", on_delete=models.PROTECT, related_name="materials")
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(default=timezone.now, editable=False)

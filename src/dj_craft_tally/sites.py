@@ -107,7 +107,9 @@ class CustomAdminSite(admin.AdminSite):
                 ).order_by("-occurred_at", "-recorded_at")[:5]
             ),
             "materials_running_low": list(
-                Material.objects.select_related("workshop", "unit").order_by("name")[:5]
+                Material.objects.filter(kind=Material.Kind.INPUT)
+                .select_related("workshop", "unit")
+                .order_by("name")[:5]
             ),
         }
 

@@ -1,5 +1,6 @@
 from decimal import Decimal
 from http import HTTPStatus
+from types import SimpleNamespace
 
 import pytest
 from django.contrib import admin
@@ -24,6 +25,8 @@ from dj_craft_tally.models import (
 def test_material_admin_displays_stock_using_unit_precision(workshop, item, gram):
     material_admin = admin.site._registry[Material]
     assert "display_stock_balance" in material_admin.list_display
+    assert "kind" in material_admin.list_display
+    assert "kind" in material_admin.list_filter
     for unit, quantity, shown in (
         (item, "96", "96"),
         (gram, "125.5", "125.50 g"),
@@ -45,6 +48,12 @@ def test_material_admin_displays_stock_using_unit_precision(workshop, item, gram
         assert f">{shown}</span>" in rendered
         assert str(material.stock_balance()) in rendered
         assert material.stock_balance() == Decimal(quantity)
+
+
+def test_project_status_change_admin_renders_missing_project_as_dash():
+    status_change_admin = admin.site._registry[tally_admin.ProjectStatusChange]
+
+    assert status_change_admin.project_link(SimpleNamespace(project=None)) == "-"
 
 
 @pytest.mark.django_db
