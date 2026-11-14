@@ -9,8 +9,10 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
+from dj_craft_tally.display import format_quantity
 from dj_craft_tally.identifiers import uuid7
 
 QUANTITY_MAX_DIGITS = 15
@@ -118,6 +120,11 @@ class Material(models.Model):
             .iterator(),
             Decimal(0),
         )
+
+    @cached_property
+    def display_stock_balance(self) -> str:
+        """Return a formatted quantity string with unit code."""
+        return format_quantity(self.stock_balance(), self.unit, include_unit_code=True)
 
     def save(self, *args, **kwargs) -> None:
         unit_is_being_saved = kwargs.get("update_fields") is None or bool(
@@ -326,7 +333,6 @@ class Blueprint(models.Model):
         return self.name
 
     def available_runs(self) -> int | None:
-        """Return complete runs supported by stock, or None with no requirements."""
         requirements = self.requirements.select_related("material")
         capacities = [
             max(0, int(requirement.material.stock_balance() // requirement.quantity))
@@ -335,9 +341,15 @@ class Blueprint(models.Model):
         return min(capacities) if capacities else None
 
     def available_output(self) -> Decimal | None:
-        """Return output from complete available runs, or None if unspecified."""
         runs = self.available_runs()
         return None if runs is None else runs * self.output_quantity
+
+    def last_made(self) -> datetime | None:
+        return InventoryTransaction.objects.filter(
+            project__blueprint=self,
+            kind=InventoryTransaction.Kind.PRODUCE,
+            posted=True,
+        ).aggregate(last=models.Max("occurred_at"))["last"]
 
 
 class BlueprintMaterialRequirement(models.Model):
@@ -713,7 +725,7 @@ class InventoryTransaction(models.Model):
 
     def __str__(self) -> str:
         identifier = self.reference or self.occurred_at.strftime("%Y-%m-%d %H:%M")
-        return f"{self.get_kind_display()} — {identifier}"
+        return f"{self.get_kind_display()} | {identifier}"
 
     def clean(self) -> None:
         super().clean()
