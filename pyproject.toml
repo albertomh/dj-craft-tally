@@ -39,7 +39,7 @@ dependencies = [
 ]
 [dependency-groups]
 dev = [
-    "ipython>8.37.0,<9.0.0",
+    "ipython>8.37.0,<10.0.0",
     "ruff>=0.14,<1.0",
 ]
 docs = ["zensical>=0.0.62"]
