@@ -4,8 +4,7 @@ from typing import ClassVar
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.forms import ModelForm
-from django.forms.widgets import Textarea
+from django.forms import ModelForm, Textarea
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -27,6 +26,18 @@ from dj_craft_tally.models import (
     Workshop,
     WorkshopMembership,
 )
+
+_WIDE_TEXTAREA_MIN_WIDTH = 500
+
+
+def _textarea_overrides(*, rows: int, min_width: int) -> dict:
+    return {
+        models.TextField: {
+            "widget": Textarea(
+                attrs={"rows": rows, "style": f"min-width: {min_width}px;"}
+            )
+        },
+    }
 
 
 class BlueprintMaterialRequirementForm(ModelForm):
@@ -92,11 +103,9 @@ class BlueprintAdmin(admin.ModelAdmin):
     list_select_related: ClassVar = ("output_unit",)
     list_filter: ClassVar = ("workshop",)
     search_fields: ClassVar = ("name", "output_name")
-    formfield_overrides: ClassVar = {
-        models.TextField: {
-            "widget": Textarea(attrs={"rows": 2, "style": "min-width: 500px;"})
-        },
-    }
+    formfield_overrides: ClassVar = _textarea_overrides(
+        rows=2, min_width=_WIDE_TEXTAREA_MIN_WIDTH
+    )
 
     @admin.display(description=_("Output quantity"), ordering="output_quantity")
     def display_output_quantity(self, obj):
@@ -128,6 +137,9 @@ class UnitAdmin(admin.ModelAdmin):
 class WorkshopAdmin(admin.ModelAdmin):
     list_display: ClassVar = ("name", "created_at")
     search_fields: ClassVar = ("name", "description")
+    formfield_overrides: ClassVar = _textarea_overrides(
+        rows=2, min_width=_WIDE_TEXTAREA_MIN_WIDTH
+    )
 
 
 @admin.register(WorkshopMembership)
@@ -147,6 +159,9 @@ class MaterialAdmin(admin.ModelAdmin):
         "kind",
         "name",
     )
+    formfield_overrides: ClassVar = _textarea_overrides(
+        rows=5, min_width=_WIDE_TEXTAREA_MIN_WIDTH
+    )
 
     @admin.display(description=_("Stock balance"))
     def display_stock_balance(self, obj):
@@ -165,6 +180,9 @@ class MaterialLotAdmin(admin.ModelAdmin):
     list_select_related: ClassVar = ("material__unit",)
     list_filter: ClassVar = ("material",)
     search_fields: ClassVar = ("reference", "supplier", "material__name")
+    formfield_overrides: ClassVar = _textarea_overrides(
+        rows=5, min_width=_WIDE_TEXTAREA_MIN_WIDTH
+    )
 
     @admin.display(description=_("Quantity per package"), ordering="quantity_per_package")
     def display_quantity_per_package(self, obj):
@@ -196,6 +214,9 @@ class EquipmentAdmin(admin.ModelAdmin):
     )
     list_filter: ClassVar = ("workshop", "kind")
     search_fields: ClassVar = ("name", "technology", "manufacturer", "model")
+    formfield_overrides: ClassVar = _textarea_overrides(
+        rows=5, min_width=_WIDE_TEXTAREA_MIN_WIDTH
+    )
 
 
 class ProjectStatusChangeInline(admin.TabularInline):
@@ -224,6 +245,9 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display: ClassVar = ("name", "workshop", "blueprint", "status", "completed_at")
     list_filter: ClassVar = ("workshop", "status")
     search_fields: ClassVar = ("name", "description")
+    formfield_overrides: ClassVar = _textarea_overrides(
+        rows=2, min_width=_WIDE_TEXTAREA_MIN_WIDTH
+    )
 
     class Media:
         css: ClassVar = {"all": ("dj_craft_tally/css/project_status_history.css",)}
@@ -271,6 +295,7 @@ class ProjectStatusChangeAdmin(admin.ModelAdmin):
 class ProjectStepMeasurementInline(admin.TabularInline):
     model = ProjectStepMeasurement
     extra = 0
+    formfield_overrides: ClassVar = _textarea_overrides(rows=1, min_width=200)
 
 
 @admin.register(ProjectStep)
@@ -287,6 +312,9 @@ class ProjectStepAdmin(admin.ModelAdmin):
     )
     list_select_related: ClassVar = ("project", "equipment")
     list_filter: ClassVar = ("outcome", "equipment")
+    formfield_overrides: ClassVar = _textarea_overrides(
+        rows=2, min_width=_WIDE_TEXTAREA_MIN_WIDTH
+    )
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         form_field = super().formfield_for_dbfield(db_field, request, **kwargs)
