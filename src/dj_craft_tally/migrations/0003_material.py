@@ -27,6 +27,18 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("name", models.CharField(max_length=200)),
+                (
+                    "kind",
+                    models.CharField(
+                        choices=[
+                            ("input", "Input"),
+                            ("output", "Output"),
+                            ("intermediate", "Intermediate"),
+                        ],
+                        default="input",
+                        max_length=32,
+                    ),
+                ),
                 ("description", models.TextField(blank=True)),
                 (
                     "created_at",
