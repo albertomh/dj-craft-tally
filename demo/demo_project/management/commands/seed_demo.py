@@ -64,9 +64,6 @@ class Command(BaseCommand):
             workshop=studio, name="Blue PLA filament", unit=gram
         )
         bolts = Material.objects.create(workshop=studio, name="M3 bolts", unit=item)
-        organisers = Material.objects.create(
-            workshop=studio, name="Printed cable organisers", unit=item
-        )
         plywood = Material.objects.create(
             workshop=studio, name="Birch plywood sheets", unit=item
         )
@@ -76,18 +73,27 @@ class Command(BaseCommand):
         fabric = Material.objects.create(
             workshop=studio, name="Cotton canvas panels", unit=item
         )
+        organisers = Material.objects.create(
+            workshop=studio,
+            name="Printed cable organisers",
+            unit=item,
+            kind=Material.Kind.OUTPUT,
+        )
         coasters = Material.objects.create(
-            workshop=studio, name="Laser-cut coasters", unit=item
+            workshop=studio,
+            name="Laser-cut coasters",
+            unit=item,
+            kind=Material.Kind.OUTPUT,
         )
         stickers = Material.objects.create(
-            workshop=studio, name="Sticker packs", unit=item
+            workshop=studio, name="Sticker packs", unit=item, kind=Material.Kind.OUTPUT
         )
         totes = Material.objects.create(workshop=studio, name="Tote bags", unit=item)
         pegboards = Material.objects.create(
-            workshop=studio, name="Pegboard panels", unit=item
+            workshop=studio, name="Pegboard panels", unit=item, kind=Material.Kind.OUTPUT
         )
         planters = Material.objects.create(
-            workshop=studio, name="Printed planters", unit=item
+            workshop=studio, name="Printed planters", unit=item, kind=Material.Kind.OUTPUT
         )
         printer = Equipment.objects.create(
             workshop=studio, name="Workshop printer", kind="3d_printer", technology="FDM"
@@ -470,7 +476,7 @@ class Command(BaseCommand):
                 pla_lot,
                 "-10",
                 "adjust",
-                "Draft stock check (not posted)",
+                "Stock check (not posted)",
                 post=False,
             )
         self.stdout.write(
