@@ -1,0 +1,11 @@
+/* Django renders the inline's string representation in an absolutely positioned paragraph
+ * outside the horizontal scroll flow. 'Previous status/Status' cells already show the change,
+ * so hide the redundant heading and restore row padding. */
+#status_changes-group .tabular th.original,
+#status_changes-group .tabular td.original {
+    display: none;
+}
+
+#status_changes-group .tabular tr.has_original td {
+    padding-top: 8px;
+}
