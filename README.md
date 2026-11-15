@@ -17,6 +17,18 @@
 > The project is in early development and uses 0.x versions. Models, APIs, and
 > workflows may change between releases.
 
+<!-- markdownlint-disable MD033 no-inline-html -->
+<div align="center">
+  <!-- markdownlint-disable MD013 line-length -->
+      <img
+        src="docs/admin_dashboard.png"
+        alt=""
+        width=600px/>
+      <p align="center"></p>
+  <!-- markdownlint-enable MD013 line-length -->
+</div>
+<!-- markdownlint-enable MD033 no-inline-html -->
+
 ## Prerequisites
 
 - A Django webapp using Django >= 5.2

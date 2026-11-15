@@ -58,6 +58,19 @@ def test_project_status_change_admin_renders_missing_project_as_dash():
 
 @pytest.mark.django_db
 @override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"])
+def test_project_status_history_inline_hides_detached_row_heading(client, workshop):
+    user = get_user_model().objects.create_superuser(username="admin", password="test")
+    project = Project.objects.create(workshop=workshop, name="Desk organisers")
+    client.force_login(user)
+
+    response = client.get(f"/admin/crafttally/project/{project.pk}/change/")
+
+    assert response.status_code == HTTPStatus.OK
+    assert b"dj_craft_tally/css/project_status_history.css" in response.content
+
+
+@pytest.mark.django_db
+@override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"])
 def test_material_admin_page_shows_unit_precision(client, workshop, item):
     user = get_user_model().objects.create_superuser(username="admin", password="test")
     material = Material.objects.create(workshop=workshop, name="Bolts", unit=item)

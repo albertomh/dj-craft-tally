@@ -225,6 +225,9 @@ class ProjectAdmin(admin.ModelAdmin):
     list_filter: ClassVar = ("workshop", "status")
     search_fields: ClassVar = ("name", "description")
 
+    class Media:
+        css: ClassVar = {"all": ("dj_craft_tally/css/project_status_history.css",)}
+
 
 @admin.register(ProjectStatusChange)
 class ProjectStatusChangeAdmin(admin.ModelAdmin):
