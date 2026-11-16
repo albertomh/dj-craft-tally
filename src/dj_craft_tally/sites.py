@@ -7,15 +7,17 @@ from django.template.response import TemplateResponse
 from django.urls import path
 
 from dj_craft_tally.apps import DjCraftTallyConfig
-from dj_craft_tally.display import format_quantity
+from dj_craft_tally.display import format_money, format_quantity
 from dj_craft_tally.models import (
     Blueprint,
+    Currency,
     Equipment,
     InventoryTransaction,
     Material,
     Project,
     Workshop,
 )
+from dj_craft_tally.services import expenditure_periods
 
 
 class CustomAdminSite(admin.AdminSite):
@@ -117,6 +119,8 @@ class CustomAdminSite(admin.AdminSite):
             "project_count": Project.objects.count(),
             "projects_by_status": projects_by_status,
             "blueprints": blueprints,
+            "has_expenditure": has_expenditure,
+            "expenditure_periods": expenditure_periods_display,
             "recent_transactions": list(
                 InventoryTransaction.objects.select_related(
                     "workshop", "project"
