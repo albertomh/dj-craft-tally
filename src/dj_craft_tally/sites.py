@@ -92,6 +92,23 @@ class CustomAdminSite(admin.AdminSite):
             reverse=True,
         )[:5]
 
+        expenditure_periods_data = expenditure_periods()
+        currencies = {currency.code: currency for currency in Currency.objects.all()}
+        expenditure_periods_display = [
+            {
+                "label": period["label"],
+                "entries": [
+                    {
+                        "code": code,
+                        "amount": format_money(amount, currencies.get(code)),
+                    }
+                    for code, amount in sorted(period["totals"].items())
+                ],
+            }
+            for period in expenditure_periods_data
+        ]
+        has_expenditure = any(period["entries"] for period in expenditure_periods_display)
+
         return {
             "workshop_count": Workshop.objects.count(),
             "material_count": Material.objects.count(),
