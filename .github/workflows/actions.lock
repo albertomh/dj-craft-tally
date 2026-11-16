@@ -6,13 +6,13 @@ workflows:
     '.github/workflows/_checks.yaml':
         - 'actions/checkout@v7.0.1'
         - 'astral-sh/setup-uv@v10.3.3'
-        - 'j178/prek-action@v3.0.0'
+        - 'j178/prek-action@v3.1.1'
         - 'wntrblm/nox@2026.10.20'
     '.github/workflows/ci.yaml': []
     '.github/workflows/docs.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/configure-pages@v6.0.0'
-        - 'actions/deploy-pages@v5.0.0'
+        - 'actions/deploy-pages@v5.0.1'
         - 'actions/upload-pages-artifact@v5.0.0'
         - 'astral-sh/setup-uv@v10.3.3'
     '.github/workflows/on-tag.yaml':
@@ -37,9 +37,9 @@ dependencies:
         commit: 'sha1-45bfe0192ca1faeb007ade9deae92b16b8254a0d'
         owner_id: 44036562
         repo_id: 513659658
-    'actions/deploy-pages@v5.0.0':
-        ref: 'v5.0.0'
-        commit: 'sha1-cd2ce8fcbc39b97be8ca5fce6e763baed58fa128'
+    'actions/deploy-pages@v5.0.1':
+        ref: 'v5.0.1'
+        commit: 'sha1-368f82528645a54fb793d4d04e342629a3f51346'
         owner_id: 44036562
         repo_id: 438112499
     'actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97':
@@ -69,9 +69,9 @@ dependencies:
         commit: 'sha1-45996ed1f6d02564a971a2fa1b5860e934307cf7'
         owner_id: 16785467
         repo_id: 262236530
-    'j178/prek-action@v3.0.0':
-        ref: 'v3.0.0'
-        commit: 'sha1-4e14d07f9231acabce116ccfca13b13dd9755ece'
+    'j178/prek-action@v3.1.1':
+        ref: 'v3.1.1'
+        commit: 'sha1-7b101f8338a08d2bd6fdb3625e4e7692428763a3'
         owner_id: 10510431
         repo_id: 1052387486
     'stefanzweifel/git-auto-commit-action@v7.2.1':
