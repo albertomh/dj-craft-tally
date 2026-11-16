@@ -40,7 +40,6 @@ def format_quantity(
 
 
 def format_money(value: Decimal | None, currency: "Currency | None"):
-    """Render a monetary value without converting between currencies."""
     if value is None or currency is None:
         return None
 

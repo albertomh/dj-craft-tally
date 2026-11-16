@@ -36,7 +36,10 @@ class CurrencyAdmin(admin.ModelAdmin):
     list_display: ClassVar = ("code", "name", "symbol", "symbol_position")
     search_fields: ClassVar = ("code", "name", "symbol")
     readonly_fields: ClassVar = (
-        "code", "name", "symbol", "symbol_position",
+        "code",
+        "name",
+        "symbol",
+        "symbol_position",
     )
 
     def has_change_permission(self, request, obj=None) -> bool:
@@ -199,6 +202,23 @@ class MaterialAdmin(admin.ModelAdmin):
 
 @admin.register(MaterialLot)
 class MaterialLotAdmin(admin.ModelAdmin):
+    fieldsets: ClassVar = (
+        (
+            None,
+            {
+                "fields": (
+                    "material",
+                    "reference",
+                    "supplier",
+                    "package_count",
+                    "quantity_per_package",
+                    "received_at",
+                    ("purchase_currency", "purchase_amount"),
+                    "notes",
+                )
+            },
+        ),
+    )
     list_display: ClassVar = (
         "received_at",
         "reference",
@@ -212,7 +232,7 @@ class MaterialLotAdmin(admin.ModelAdmin):
     list_filter: ClassVar = ("material", "purchase_currency")
     search_fields: ClassVar = ("reference", "supplier", "material__name")
     formfield_overrides: ClassVar = _textarea_overrides(
-        rows=5, min_width=_WIDE_TEXTAREA_MIN_WIDTH
+        rows=2, min_width=_WIDE_TEXTAREA_MIN_WIDTH
     )
 
     @admin.display(description=_("Quantity per package"), ordering="quantity_per_package")
@@ -235,6 +255,15 @@ class MaterialLotAdmin(admin.ModelAdmin):
                 "reference",
             )
         return super().get_readonly_fields(request, obj)
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        purchase_currency_field = form.base_fields["purchase_currency"]
+        purchase_currency_field.widget.can_add_related = False
+        purchase_currency_field.widget.can_view_related = False
+        purchase_currency_field.help_text = ""
+        form.base_fields["purchase_amount"].help_text = ""
+        return form
 
 
 @admin.register(Equipment)
