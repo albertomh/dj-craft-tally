@@ -4,7 +4,7 @@
 # ```
 # jobs:
 #   checks:
-#     uses: ./.github/workflows/_checks.yaml
+#     uses: $/.github/workflows/_checks.yaml
 # ```
 name: Checks
 
@@ -12,22 +12,37 @@ on:
   workflow_call:
 
 jobs:
+  lockfile:
+    runs-on: ubuntu-slim
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - run: gh extension install github/gh-actions-lock --pin v0.4.1
+      - run: gh actions-lock --verify
+
   pre_commit:
     runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/prek
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: $/.github/actions/prek
 
   generate_matrix:
     runs-on: ubuntu-26.04
     outputs:
       session: ${{ steps.set-matrix.outputs.session }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.12.5"
-      - uses: wntrblm/nox@main
+      - uses: wntrblm/nox@2026.10.20
       - id: set-matrix
         run: echo "session=$(uvx nox --json -l -s test | jq -c '[.[].session]')" >> "$GITHUB_OUTPUT"
 
@@ -41,10 +56,14 @@ jobs:
         session: ${{ fromJSON(needs.generate_matrix.outputs.session) }}
     runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.12.5"
           enable-cache: true
-      - uses: wntrblm/nox@main
-      - run: nox -s "${{ matrix.session }}"
+      - uses: wntrblm/nox@2026.10.20
+      - run: nox -s "$NOX_SESSION"
+        env:
+          NOX_SESSION: ${{ matrix.session }}
