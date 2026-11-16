@@ -12,6 +12,7 @@ import dj_craft_tally.admin as tally_admin
 from dj_craft_tally.models import (
     Blueprint,
     BlueprintMaterialRequirement,
+    Currency,
     InventoryTransaction,
     InventoryTransactionLine,
     Material,
@@ -54,6 +55,27 @@ def test_project_status_change_admin_renders_missing_project_as_dash():
     status_change_admin = admin.site._registry[tally_admin.ProjectStatusChange]
 
     assert status_change_admin.project_link(SimpleNamespace(project=None)) == "-"
+
+
+@pytest.mark.django_db
+def test_material_lot_admin_displays_purchase_amount(material):
+    lot = MaterialLot.objects.create(
+        material=material,
+        quantity_per_package=1,
+        purchase_amount=Decimal("1.25"),
+        purchase_currency=Currency.objects.get(code="GBP"),
+    )
+    lot_admin = admin.site._registry[MaterialLot]
+
+    assert str(lot_admin.display_purchase_amount(lot)) == "£1.25"
+    assert tally_admin.format_money(None, Currency.objects.get(code="GBP")) is None
+
+
+@pytest.mark.django_db
+def test_format_money_normalizes_negative_zero_and_supports_suffix_currency():
+    euro = Currency.objects.get(code="EUR")
+
+    assert str(tally_admin.format_money(Decimal("-0.001"), euro)) == "0.00 €"
 
 
 @pytest.mark.django_db

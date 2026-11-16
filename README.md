@@ -8,7 +8,7 @@
 [![nox](https://img.shields.io/badge/%F0%9F%A6%8A-Nox-D85E00.svg?style=flat-square)](https://github.com/wntrblm/nox)
 [![coverage](https://img.shields.io/badge/😴_coverage-59aabd?style=flat-square)](https://coverage.readthedocs.io/)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/albertomh/dj-craft-tally/ci.yaml?style=flat-square&logo=github&label=CI&labelColor=000000)](https://github.com/albertomh/dj-craft-tally/actions/workflows/ci.yaml)
-<!--[![PyPI Version](https://img.shields.io/pypi/v/dj-craft-tally?style=flat-square&labelColor=0073b7&color=0073b7&label=📦%20PyPI)](https://pypi.org/project/dj-craft-tally/)-->
+[![PyPI Version](https://img.shields.io/pypi/v/dj-craft-tally?style=flat-square&labelColor=0073b7&color=0073b7&label=📦%20PyPI)](https://pypi.org/project/dj-craft-tally/)
 <!-- markdownlint-enable MD013 line-length -->
 
 `dj-craft-tally` is a Django app to help makers track projects and inventory in their workshop.
@@ -66,10 +66,12 @@
 
 ## Features
 
+`dj-craft-tally` extends the Django admin to help you:
+
 - Organise materials, equipment, and projects by workshop.
+- Describe blueprint outputs & material requirements.
 - Record material lots and inventory movements.
-- Describe blueprint outputs and their material requirements.
-- Track projects, status history, project steps, and measurements in Django admin.
+- Record an optional purchase amount and currency for each material delivery.
 
 See the [documentation](https://albertomh.github.io/dj-craft-tally/) for an admin
 walkthrough.
@@ -109,11 +111,8 @@ uv run python demo/manage.py seed_demo
 uv run python demo/manage.py runserver
 ```
 
-Sign in at <http://127.0.0.1:8000/admin/> with username `demo` and password
-`demo`. The command creates sample workshop data and is safe to run again.
-The SQLite database is local and ignored by Git. To reset the demo, delete
-`demo/db.sqlite3`, then rerun the migrations and seed command. These settings
-and credentials are for local development only.
+Sign in at <http://127.0.0.1:8000/admin/> with username `demo` and password `demo`.
+To reset the demo, delete `demo/db.sqlite3`, then rerun the migrations and seed command.
 
 ### Use the development version in projects
 

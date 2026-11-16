@@ -9,10 +9,11 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from dj_craft_tally.display import format_quantity
+from dj_craft_tally.display import format_money, format_quantity
 from dj_craft_tally.models import (
     Blueprint,
     BlueprintMaterialRequirement,
+    Currency,
     Equipment,
     InventoryTransaction,
     InventoryTransactionLine,
@@ -28,6 +29,21 @@ from dj_craft_tally.models import (
 )
 
 _WIDE_TEXTAREA_MIN_WIDTH = 500
+
+
+@admin.register(Currency)
+class CurrencyAdmin(admin.ModelAdmin):
+    list_display: ClassVar = ("code", "name", "symbol", "symbol_position")
+    search_fields: ClassVar = ("code", "name", "symbol")
+    readonly_fields: ClassVar = (
+        "code", "name", "symbol", "symbol_position",
+    )
+
+    def has_change_permission(self, request, obj=None) -> bool:
+        return False
+
+    def has_delete_permission(self, request, obj=None) -> bool:
+        return False
 
 
 def _textarea_overrides(*, rows: int, min_width: int) -> dict:
@@ -131,6 +147,19 @@ class UnitAdmin(admin.ModelAdmin):
     )
     list_filter: ClassVar = ("dimension",)
     search_fields: ClassVar = ("code", "name", "symbol")
+    readonly_fields: ClassVar = (
+        "symbol",
+        "name",
+        "dimension",
+        "scale_to_base",
+        "display_decimal_places",
+    )
+
+    def has_change_permission(self, request, obj=None) -> bool:
+        return False
+
+    def has_delete_permission(self, request, obj=None) -> bool:
+        return False
 
 
 @admin.register(Workshop)
@@ -171,14 +200,16 @@ class MaterialAdmin(admin.ModelAdmin):
 @admin.register(MaterialLot)
 class MaterialLotAdmin(admin.ModelAdmin):
     list_display: ClassVar = (
+        "received_at",
         "reference",
         "material",
+        "supplier",
         "package_count",
         "display_quantity_per_package",
-        "supplier",
+        "display_purchase_amount",
     )
-    list_select_related: ClassVar = ("material__unit",)
-    list_filter: ClassVar = ("material",)
+    list_select_related: ClassVar = ("material__unit", "purchase_currency")
+    list_filter: ClassVar = ("material", "purchase_currency")
     search_fields: ClassVar = ("reference", "supplier", "material__name")
     formfield_overrides: ClassVar = _textarea_overrides(
         rows=5, min_width=_WIDE_TEXTAREA_MIN_WIDTH
@@ -189,6 +220,10 @@ class MaterialLotAdmin(admin.ModelAdmin):
         return format_quantity(
             obj.quantity_per_package, obj.material.unit, include_unit_code=True
         )
+
+    @admin.display(description=_("Paid"), ordering="purchase_amount")
+    def display_purchase_amount(self, obj):
+        return format_money(obj.purchase_amount, obj.purchase_currency)
 
     def get_readonly_fields(self, request, obj=None):
         if obj:

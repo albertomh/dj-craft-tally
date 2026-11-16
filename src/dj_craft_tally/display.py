@@ -13,7 +13,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 if TYPE_CHECKING:
-    from dj_craft_tally.models import Unit
+    from dj_craft_tally.models import Currency, Unit
 
 
 def format_quantity(
@@ -37,3 +37,17 @@ def format_quantity(
         _("Exact: %(value)s") % {"value": value},
         shown,
     )
+
+
+def format_money(value: Decimal | None, currency: "Currency | None"):
+    """Render a monetary value without converting between currencies."""
+    if value is None or currency is None:
+        return None
+
+    rounded = value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if not rounded:
+        rounded = rounded.copy_abs()
+    shown = formats.number_format(rounded, decimal_pos=2, use_l10n=True)
+    if currency.symbol_position == "prefix":
+        return format_html("{}{}", currency.symbol, shown)
+    return format_html("{} {}", shown, currency.symbol)
