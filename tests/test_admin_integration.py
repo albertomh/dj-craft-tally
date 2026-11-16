@@ -67,7 +67,10 @@ def test_material_lot_admin_displays_purchase_amount(material):
     )
     lot_admin = admin.site._registry[MaterialLot]
 
-    assert str(lot_admin.display_purchase_amount(lot)) == "£1.25"
+    assert (
+        str(lot_admin.display_purchase_amount(lot))
+        == '<span class="ct-mono">£1.25</span>'
+    )
     assert tally_admin.format_money(None, Currency.objects.get(code="GBP")) is None
 
 
