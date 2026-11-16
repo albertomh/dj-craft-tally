@@ -1,0 +1,75 @@
+name: update-github-action-references
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Avoid minute 0 because scheduled workflows can be delayed during peak load.
+    - cron: "17 7 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-github-action-references:
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Validate GitHub Actions references token
+        env:
+          GH_TOKEN: ${{ secrets.DJ_CRAFT_TALLY_GITHUB_ACTION_REFERENCES_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if [[ -z "${GH_TOKEN}" ]]; then
+            echo "::error::DJ_CRAFT_TALLY_GITHUB_ACTION_REFERENCES_TOKEN is not set."
+            exit 1
+          fi
+
+          if ! gh api "repos/${GH_REPO}" --silent; then
+            echo "::error::DJ_CRAFT_TALLY_GITHUB_ACTION_REFERENCES_TOKEN cannot read ${GH_REPO}. For a fine-grained PAT, grant it Contents: read/write, Pull requests: read/write, Workflows: read/write, and Metadata: read."
+            exit 1
+          fi
+        shell: bash
+
+      - uses: actions/checkout@v7.0.1
+        with:
+          token: ${{ secrets.DJ_CRAFT_TALLY_GITHUB_ACTION_REFERENCES_TOKEN }}
+          persist-credentials: false
+
+      - name: Update GitHub Actions references
+        run: python3 .github/scripts/update-github-action-references.py
+
+      - name: Refresh GitHub Actions lockfile
+        env:
+          GH_TOKEN: ${{ secrets.DJ_CRAFT_TALLY_GITHUB_ACTION_REFERENCES_TOKEN }}
+        run: |
+          gh extension install github/gh-actions-lock --pin v0.4.1
+          gh actions-lock
+
+      - name: Open pull request
+        env:
+          GH_TOKEN: ${{ secrets.DJ_CRAFT_TALLY_GITHUB_ACTION_REFERENCES_TOKEN }}
+          BRANCH_NAME: automation/update-github-action-references
+          PR_BODY: Updates GitHub Actions references and their lockfile.
+        run: |
+          if git diff --quiet; then
+            echo "GitHub Actions references and lockfile are already up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin "+refs/heads/${BRANCH_NAME}:refs/remotes/origin/${BRANCH_NAME}" || true
+          git checkout -B "${BRANCH_NAME}"
+          git add .github
+          git commit -m "ci: update GitHub Actions references"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force-with-lease origin "${BRANCH_NAME}"
+
+          gh pr create \
+            --base "${GITHUB_REF_NAME}" \
+            --head "${BRANCH_NAME}" \
+            --title "ci: update GitHub Actions references" \
+            --body "${PR_BODY}" \
+          || gh pr edit "${BRANCH_NAME}" \
+            --title "ci: update GitHub Actions references" \
+            --body "${PR_BODY}"
