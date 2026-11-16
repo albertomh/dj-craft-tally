@@ -70,7 +70,6 @@ class CustomAdminSite(admin.AdminSite):
             }
             for status, label in Project.Status.choices
         ]
-
         # Never-made blueprints sort last; the sort is stable, so ties keep name order.
         blueprints = sorted(
             (
@@ -116,7 +115,7 @@ class CustomAdminSite(admin.AdminSite):
     def dashboard(self, request, extra_context=None):
         context = {
             **self.each_context(request),
-            "title": "Workshop dashboard",
+            "title": "Craft Tally",
             "subtitle": None,
             "app_list": self.get_app_list(request),
             **self.dashboard_context(request),
