@@ -127,6 +127,18 @@ def test_material_admin_page_shows_unit_precision(client, workshop, item):
 
 
 @pytest.mark.django_db
+@override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"])
+def test_currency_breadcrumb_uses_title_cased_app_name(client):
+    user = get_user_model().objects.create_superuser(username="admin", password="test")
+    client.force_login(user)
+
+    response = client.get("/admin/crafttally/currency/")
+
+    assert response.status_code == HTTPStatus.OK
+    assert b'<a href="/admin/crafttally/">Craft Tally</a>' in response.content
+
+
+@pytest.mark.django_db
 def test_inventory_transaction_line_admin_orders_by_parent_occurrence(workshop, material):
     earlier = InventoryTransaction.objects.create(
         workshop=workshop,
