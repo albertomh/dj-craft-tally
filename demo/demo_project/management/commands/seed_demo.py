@@ -14,6 +14,7 @@ from django.utils import timezone
 from dj_craft_tally.models import (
     Blueprint,
     BlueprintMaterialRequirement,
+    Currency,
     Equipment,
     InventoryTransaction,
     InventoryTransactionLine,
@@ -60,6 +61,7 @@ class Command(BaseCommand):
         Workshop.objects.create(name="Woodworking Bench", description="Second workshop")
         gram = Unit.objects.get(code="g")
         item = Unit.objects.get(code="item")
+        gbp = Currency.objects.get(code="GBP")
         pla = Material.objects.create(
             workshop=studio, name="Blue PLA filament", unit=gram
         )
@@ -120,6 +122,8 @@ class Command(BaseCommand):
             package_count=2,
             quantity_per_package=Decimal("1000"),
             received_at=jitter(),
+            purchase_amount=Decimal("48.00"),
+            purchase_currency=gbp,
         )
         bolt_lot = MaterialLot.objects.create(
             material=bolts,
@@ -128,6 +132,8 @@ class Command(BaseCommand):
             package_count=1,
             quantity_per_package=Decimal("100"),
             received_at=jitter(),
+            purchase_amount=Decimal("18.50"),
+            purchase_currency=gbp,
         )
         plywood_lot = MaterialLot.objects.create(
             material=plywood,

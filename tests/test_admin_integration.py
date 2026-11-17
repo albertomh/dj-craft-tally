@@ -12,6 +12,7 @@ import dj_craft_tally.admin as tally_admin
 from dj_craft_tally.models import (
     Blueprint,
     BlueprintMaterialRequirement,
+    Currency,
     InventoryTransaction,
     InventoryTransactionLine,
     Material,
@@ -54,6 +55,42 @@ def test_project_status_change_admin_renders_missing_project_as_dash():
     status_change_admin = admin.site._registry[tally_admin.ProjectStatusChange]
 
     assert status_change_admin.project_link(SimpleNamespace(project=None)) == "-"
+
+
+@pytest.mark.django_db
+def test_material_lot_admin_displays_purchase_amount(material):
+    lot = MaterialLot.objects.create(
+        material=material,
+        quantity_per_package=1,
+        purchase_amount=Decimal("1.25"),
+        purchase_currency=Currency.objects.get(code="GBP"),
+    )
+    lot_admin = admin.site._registry[MaterialLot]
+
+    assert str(lot_admin.display_purchase_amount(lot)) == "£1.25"
+    assert tally_admin.format_money(None, Currency.objects.get(code="GBP")) is None
+
+
+def test_material_lot_admin_places_currency_before_amount_and_hides_help_text():
+    lot_admin = admin.site._registry[MaterialLot]
+    request = RequestFactory().get("/")
+    request.user = SimpleNamespace(has_perm=lambda permission: True)
+
+    form = lot_admin.get_form(request)
+
+    fields = lot_admin.fieldsets[0][1]["fields"]
+    assert ("purchase_currency", "purchase_amount") in fields
+    assert form.base_fields["purchase_currency"].help_text == ""
+    assert form.base_fields["purchase_amount"].help_text == ""
+    assert form.base_fields["purchase_currency"].widget.can_add_related is False
+    assert form.base_fields["purchase_currency"].widget.can_view_related is False
+
+
+@pytest.mark.django_db
+def test_format_money_normalizes_negative_zero_and_supports_suffix_currency():
+    euro = Currency.objects.get(code="EUR")
+
+    assert str(tally_admin.format_money(Decimal("-0.001"), euro)) == "0.00 €"
 
 
 @pytest.mark.django_db

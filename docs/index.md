@@ -61,6 +61,9 @@ with permission to manage the app's models.
    the quantity with a separate transaction rather than editing the receipt.
    Lots created before this feature are not backfilled, to avoid double counting
    receipts that were already entered manually.
+   Optionally record the amount paid and its currency on the material lot.
+   This records the delivery price only; it does not allocate costs to output
+   or attempt inventory valuation.
 3. To record a stock movement, create an **Inventory transaction** with its
    workshop, kind, and occurrence date. Then create an **Inventory transaction
    line** linked to it and the material. Quantities are signed: for example,
