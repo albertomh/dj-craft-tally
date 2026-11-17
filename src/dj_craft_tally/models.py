@@ -407,18 +407,29 @@ class Blueprint(models.Model):
     def cost_per_output_unit(self) -> CostBreakdown:
         """The estimated material cost per output unit, plus the lots used.
 
-        Requirements are costed from the newest priced lots for each material,
-        falling back to older lots when a newer lot lacks enough quantity.
-        Costs are grouped by currency. An empty ``cost_per_unit`` means at
-        least one requirement cannot be costed.
+        Requirements are costed from the oldest priced lots first, using newer
+        lots when needed. Lots without a receipt date follow dated lots;
+        ties are ordered by ID. Available quantities are the sums of posted
+        lot movements. A nonzero balance of posted movements without a lot
+        makes the estimate unavailable. Costs are grouped by currency; an empty
+        ``cost_per_unit`` means a requirement cannot be costed.
         """
         if self.output_quantity <= 0:
             return CostBreakdown({}, ())
 
-        priced_lots = MaterialLot.objects.filter(
-            purchase_amount__isnull=False,
-            purchase_currency__isnull=False,
-        ).order_by(models.F("received_at").desc(nulls_last=True), "-pk")
+        priced_lots = (
+            MaterialLot.objects.filter(
+                purchase_amount__isnull=False,
+                purchase_currency__isnull=False,
+            )
+            .annotate(
+                remaining_stock=models.Sum(
+                    "inventory_lines__quantity",
+                    filter=models.Q(inventory_lines__transaction__posted=True),
+                )
+            )
+            .order_by(models.F("received_at").asc(nulls_last=True), "pk")
+        )
 
         requirements = self.requirements.select_related("material").prefetch_related(
             models.Prefetch("material__lots", queryset=priced_lots, to_attr="priced_lots")
@@ -426,11 +437,19 @@ class Blueprint(models.Model):
 
         usages: list[LotUsage] = []
         for requirement in requirements:
+            unallocated = requirement.material.inventory_lines.filter(
+                transaction__posted=True, material_lot__isnull=True
+            ).aggregate(total=models.Sum("quantity"))["total"]
+            if unallocated:
+                return CostBreakdown({}, ())
             remaining = requirement.quantity
             for lot in requirement.material.priced_lots:
                 if remaining <= 0:
                     break
-                quantity = min(remaining, lot.total_quantity)
+                available = max(lot.remaining_stock or Decimal("0"), Decimal("0"))
+                if not available:
+                    continue
+                quantity = min(remaining, available)
                 usages.append(
                     LotUsage(
                         lot=lot,

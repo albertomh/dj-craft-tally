@@ -73,7 +73,7 @@ def test_dashboard_context_reports_summary_metrics(dashboard_site, dashboard_req
     BlueprintMaterialRequirement.objects.create(
         blueprint=blueprint, material=material, quantity=required_quantity
     )
-    MaterialLot.objects.create(
+    lot = MaterialLot.objects.create(
         material=material,
         quantity_per_package=required_quantity,
         purchase_amount=Decimal("12.50"),
@@ -86,7 +86,7 @@ def test_dashboard_context_reports_summary_metrics(dashboard_site, dashboard_req
         reference="clay receipt",
     )
     InventoryTransactionLine.objects.create(
-        transaction=stock, material=material, quantity=stock_quantity
+        transaction=stock, material=material, material_lot=lot, quantity=stock_quantity
     )
     stock.post()
     project = Project.objects.create(workshop=workshop, name="Kitchen tiles")
