@@ -3,6 +3,24 @@
     font-size: 0.7rem;
 }
 
+#result_list td.field-display_output_quantity,
+#result_list td.field-display_cost_per_output_unit,
+#result_list td.field-available_runs,
+#result_list td.field-display_available_output {
+    text-align: right !important;
+}
+
+body.model-workshop.change-list #result_list td.field-created_at,
+body.model-workshop.change-list #result_list th.column-created_at,
+body.model-workshopmembership.change-list #result_list td.field-created_at,
+body.model-workshopmembership.change-list #result_list th.column-created_at,
+body.model-projectstep.change-list #result_list td.field-occurred_at,
+body.model-projectstep.change-list #result_list th.column-occurred_at {
+    font-family: monospace;
+    font-size: 0.7rem;
+    text-align: right !important;
+}
+
 .ct-dashboard {
     max-width: 900px;
 }
@@ -180,9 +198,9 @@ table.ct-table td {
 }
 
 table.ct-table th {
-    border: 0px;
+    border: 0;
     background-color: var(--breadcrumbs-bg);
-    color: #ffffff
+    color: #ffffff;
 }
 
 table.ct-table .ct-right {

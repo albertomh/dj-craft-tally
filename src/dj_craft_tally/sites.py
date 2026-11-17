@@ -72,6 +72,7 @@ class CustomAdminSite(admin.AdminSite):
             }
             for status, label in Project.Status.choices
         ]
+        currencies = {currency.code: currency for currency in Currency.objects.all()}
         # Never-made blueprints sort last; the sort is stable, so ties keep name order.
         blueprints = sorted(
             (
@@ -84,6 +85,15 @@ class CustomAdminSite(admin.AdminSite):
                         blueprint.output_unit,
                         include_unit_code=True,
                     ),
+                    "cost": [
+                        {
+                            "code": code,
+                            "amount": format_money(amount, currencies.get(code)),
+                        }
+                        for code, amount in sorted(
+                            blueprint.cost_per_output_unit().items()
+                        )
+                    ],
                     "last_made": blueprint.last_made(),
                 }
                 for blueprint in Blueprint.objects.select_related("output_unit").order_by(
@@ -95,7 +105,6 @@ class CustomAdminSite(admin.AdminSite):
         )[:5]
 
         expenditure_periods_data = expenditure_periods()
-        currencies = {currency.code: currency for currency in Currency.objects.all()}
         expenditure_periods_display = [
             {
                 "label": period["label"],
