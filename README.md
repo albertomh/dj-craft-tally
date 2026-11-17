@@ -14,8 +14,8 @@
 `dj-craft-tally` is a Django app to help makers track projects and inventory in their workshop.
 
 > [!IMPORTANT]
-> The project is in early development and uses 0.x versions. Models, APIs, and
-> workflows may change between releases.
+> The project is in early development and uses 0.x versions.  
+> Models, APIs, and workflows may change between releases.
 
 <!-- markdownlint-disable MD033 no-inline-html -->
 <div align="center">
@@ -163,6 +163,5 @@ msgfmt -o locale/fr_FR/LC_MESSAGES/django.mo \
 ```
 
 The demo enables `es-es` and `fr-fr` and exposes Django's standard language
-switching endpoint at `/i18n/`. Run the demo as above, switch the language in
-the session, and visit `/admin/crafttally/` to verify model labels, admin
-actions, dashboard text, validation messages, and number/date formatting.
+switching endpoint at `/i18n/`. To see translations in action: run the demo as above,
+switch language in the session, and visit `/admin/crafttally/`.

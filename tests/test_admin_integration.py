@@ -74,6 +74,27 @@ def test_material_lot_admin_displays_purchase_amount(material):
     assert tally_admin.format_money(None, Currency.objects.get(code="GBP")) is None
 
 
+@pytest.mark.django_db
+def test_blueprint_admin_displays_cost_per_output_unit(blueprint, material):
+    BlueprintMaterialRequirement.objects.create(
+        blueprint=blueprint, material=material, quantity=Decimal("2")
+    )
+    MaterialLot.objects.create(
+        material=material,
+        quantity_per_package=2,
+        purchase_amount=Decimal("12.50"),
+        purchase_currency=Currency.objects.get(code="GBP"),
+    )
+
+    blueprint_admin = admin.site._registry[Blueprint]
+
+    assert "display_cost_per_output_unit" in blueprint_admin.list_display
+    assert (
+        str(blueprint_admin.display_cost_per_output_unit(blueprint))
+        == '<span class="ct-mono">£12.50</span>'
+    )
+
+
 def test_material_lot_admin_places_currency_before_amount_and_hides_help_text():
     lot_admin = admin.site._registry[MaterialLot]
     request = RequestFactory().get("/")

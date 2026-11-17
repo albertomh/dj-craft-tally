@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.forms import ModelForm, Textarea
 from django.urls import reverse
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from django.utils.translation import gettext_lazy as _
 
 from dj_craft_tally.display import format_money, format_quantity
@@ -111,11 +111,29 @@ class BlueprintMaterialRequirementInline(admin.TabularInline):
 @admin.register(Blueprint)
 class BlueprintAdmin(admin.ModelAdmin):
     inlines: ClassVar = (BlueprintMaterialRequirementInline,)
+    fieldsets: ClassVar = (
+        (
+            None,
+            {
+                "fields": (
+                    "workshop",
+                    "name",
+                    "output_name",
+                    "output_quantity",
+                    "output_unit",
+                    "description",
+                )
+            },
+        ),
+        (_("Cost estimate"), {"fields": ("display_cost_per_output_unit",)}),
+    )
+    readonly_fields: ClassVar = ("display_cost_per_output_unit",)
     list_display: ClassVar = (
         "name",
         "workshop",
         "output_name",
         "display_output_quantity",
+        "display_cost_per_output_unit",
         "available_runs",
         "display_available_output",
     )
@@ -137,6 +155,22 @@ class BlueprintAdmin(admin.ModelAdmin):
         return format_quantity(
             obj.available_output(), obj.output_unit, include_unit_code=True
         )
+
+    @admin.display(description=_("Cost per output unit"))
+    def display_cost_per_output_unit(self, obj):
+        costs = obj.cost_per_output_unit()
+        if not costs:
+            return "-"
+        currencies = Currency.objects.in_bulk(costs)
+        amounts = format_html_join(
+            "<br>",
+            "{}",
+            (
+                (format_money(amount, currencies.get(code)),)
+                for code, amount in sorted(costs.items())
+            ),
+        )
+        return format_html('<span class="ct-mono">{}</span>', amounts)
 
 
 @admin.register(Unit)
