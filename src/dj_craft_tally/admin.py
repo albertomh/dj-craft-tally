@@ -432,7 +432,7 @@ class InventoryTransactionAdmin(admin.ModelAdmin):
             return format_html(r'<a href="{}">{}</a>', url, project)
         return "-"
 
-    @admin.action(description="Post selected draft transactions")
+    @admin.action(description=_("Post selected draft transactions"))
     def post_transactions(self, request, queryset):
         for entry in queryset:
             try:

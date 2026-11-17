@@ -1,0 +1,510 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: dj-craft-tally 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-17 08:24+0000\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? "
+"1 : 2;\n"
+
+#: src/dj_craft_tally/admin.py:129
+msgid "Output quantity"
+msgstr "Cantidad de producción"
+
+#: src/dj_craft_tally/admin.py:135
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:276
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:283
+msgid "Available output"
+msgstr "Producción disponible"
+
+#: src/dj_craft_tally/admin.py:198
+msgid "Stock balance"
+msgstr "Existencias disponibles"
+
+#: src/dj_craft_tally/admin.py:238
+msgid "Quantity per package"
+msgstr "Cantidad por paquete"
+
+#: src/dj_craft_tally/admin.py:244
+msgid "Paid"
+msgstr "Importe"
+
+#: src/dj_craft_tally/admin.py:342 src/dj_craft_tally/admin.py:427
+#: src/dj_craft_tally/admin.py:485 src/dj_craft_tally/models.py:537
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:316
+msgid "Project"
+msgstr "Proyecto"
+
+#: src/dj_craft_tally/admin.py:398 src/dj_craft_tally/admin.py:493
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:347
+msgid "Quantity"
+msgstr "Cantidad"
+
+#: src/dj_craft_tally/admin.py:435
+msgid "Post selected draft transactions"
+msgstr "Publicar transacciones seleccionadas"
+
+#: src/dj_craft_tally/admin.py:479 src/dj_craft_tally/models.py:116
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:346
+msgid "Material"
+msgstr "Material"
+
+#: src/dj_craft_tally/display.py:37
+#, python-format
+msgid "Exact: %(value)s"
+msgstr "Exacto: %(value)s"
+
+#: src/dj_craft_tally/models.py:33
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:345
+msgid "Workshop"
+msgstr "Taller"
+
+#: src/dj_craft_tally/models.py:34
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:213
+msgid "Workshops"
+msgstr "Talleres"
+
+#: src/dj_craft_tally/models.py:45
+msgid "Owner"
+msgstr "Propietario"
+
+#: src/dj_craft_tally/models.py:46
+msgid "Member"
+msgstr "Miembro"
+
+#: src/dj_craft_tally/models.py:61
+msgid "Workshop membership"
+msgstr "Afiliaciones a talleres"
+
+#: src/dj_craft_tally/models.py:62
+msgid "Workshop memberships"
+msgstr "Afiliaciones a talleres"
+
+#: src/dj_craft_tally/models.py:83
+msgid "Material stock units must be changed through the model instance."
+msgstr ""
+"Las unidades de stock del material deben cambiarse a través de la instancia "
+"del modelo."
+
+#: src/dj_craft_tally/models.py:101
+msgid "Input"
+msgstr "Materia prima"
+
+#: src/dj_craft_tally/models.py:102
+msgid "Output"
+msgstr "Producto final"
+
+#: src/dj_craft_tally/models.py:103
+msgid "Intermediate"
+msgstr "Intermediario"
+
+#: src/dj_craft_tally/models.py:117
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:221
+msgid "Materials"
+msgstr "Materiales"
+
+#: src/dj_craft_tally/models.py:159
+msgid ""
+"The stock unit cannot change after this material has been used in inventory, "
+"lots, or blueprints."
+msgstr ""
+"La unidad de stock no se puede cambiar después de que este material se haya "
+"utilizado en el inventario, lotes o planos."
+
+#: src/dj_craft_tally/models.py:184 src/dj_craft_tally/models.py:288
+msgid "A lot's material and received quantity cannot be changed."
+msgstr "El material y la cantidad recibida de un lote no se pueden cambiar."
+
+#: src/dj_craft_tally/models.py:196
+msgid "Create lots individually to record their receipts."
+msgstr "Crea los lotes individualmente para registrar acuses de recibo."
+
+#: src/dj_craft_tally/models.py:221
+msgid "Amount paid for this delivery."
+msgstr "Precio de esta partida."
+
+#: src/dj_craft_tally/models.py:229
+msgid "Currency of the amount paid for this delivery."
+msgstr "Divisa del precio"
+
+#: src/dj_craft_tally/models.py:234
+msgid "Material lot"
+msgstr "Lote de material"
+
+#: src/dj_craft_tally/models.py:235
+msgid "Material lots"
+msgstr "Lotes de material"
+
+#: src/dj_craft_tally/models.py:252
+msgid "Enter at least one package."
+msgstr "Introduce al menos un paquete."
+
+#: src/dj_craft_tally/models.py:255
+msgid "Enter the amount paid when selecting a purchase currency."
+msgstr "Introduce el importe además de la divisa."
+
+#: src/dj_craft_tally/models.py:259
+msgid "Select the currency of the amount paid for this delivery."
+msgstr "Selecciona la divisa del importe."
+
+#: src/dj_craft_tally/models.py:315
+msgid "3D printer"
+msgstr "Impresora 3D"
+
+#: src/dj_craft_tally/models.py:316
+msgid "Laser cutter"
+msgstr "Cortadora láser"
+
+#: src/dj_craft_tally/models.py:317
+msgid "CNC machine"
+msgstr "Máquina CNC"
+
+#: src/dj_craft_tally/models.py:318
+msgid "Cutting machine"
+msgstr "Máquina de corte"
+
+#: src/dj_craft_tally/models.py:319
+msgid "Other"
+msgstr "Otro"
+
+#: src/dj_craft_tally/models.py:333 src/dj_craft_tally/models.py:334
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:217
+msgid "Equipment"
+msgstr "Herramientas"
+
+#: src/dj_craft_tally/models.py:368
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:281
+msgid "Blueprint"
+msgstr "Plano"
+
+#: src/dj_craft_tally/models.py:369
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:225
+msgid "Blueprints"
+msgstr "Planos"
+
+#: src/dj_craft_tally/models.py:413 src/dj_craft_tally/models.py:873
+msgid "Quantity in the material's stock unit."
+msgstr "Cantidad en la unidad de stock del material."
+
+#: src/dj_craft_tally/models.py:419
+msgid "Blueprint material requirement"
+msgstr "Requisito de material del plano"
+
+#: src/dj_craft_tally/models.py:420
+msgid "Blueprint material requirements"
+msgstr "Requisitos de materiales del plano"
+
+#: src/dj_craft_tally/models.py:438
+msgid "The material must belong to the blueprint's workshop."
+msgstr "El material debe pertenecer al taller del plano."
+
+#: src/dj_craft_tally/models.py:455
+msgid "Count"
+msgstr "Cuenta"
+
+#: src/dj_craft_tally/models.py:456
+msgid "Mass"
+msgstr "Masa"
+
+#: src/dj_craft_tally/models.py:457
+msgid "Volume"
+msgstr "Volumen"
+
+#: src/dj_craft_tally/models.py:458
+msgid "Length"
+msgstr "Longitud"
+
+#: src/dj_craft_tally/models.py:459
+msgid "Area"
+msgstr "Área"
+
+#: src/dj_craft_tally/models.py:460
+msgid "Time"
+msgstr "Tiempo"
+
+#: src/dj_craft_tally/models.py:466
+msgid "A stable identifier, such as g, mL, or item."
+msgstr "Un identificador estable, como g, mL o artículo."
+
+#: src/dj_craft_tally/models.py:474
+msgid "Decimal places used when displaying quantities in this unit."
+msgstr "Número de decimales usados al mostrar cantidades en esta unidad."
+
+#: src/dj_craft_tally/models.py:484
+msgid "How many base units this unit represents within its dimension."
+msgstr "Cuántas unidades base representa esta unidad dentro de su dimensión."
+
+#: src/dj_craft_tally/models.py:488
+msgid "Unit"
+msgstr "Unidad"
+
+#: src/dj_craft_tally/models.py:489
+msgid "Units"
+msgstr "Unidades"
+
+#: src/dj_craft_tally/models.py:513
+msgid "Planned"
+msgstr "Planificado"
+
+#: src/dj_craft_tally/models.py:514
+msgid "Active"
+msgstr "Activo"
+
+#: src/dj_craft_tally/models.py:515
+msgid "Stalled"
+msgstr "Pausado"
+
+#: src/dj_craft_tally/models.py:516
+msgid "Complete"
+msgstr "Completado"
+
+#: src/dj_craft_tally/models.py:517
+msgid "Abandoned"
+msgstr "Abandonado"
+
+#: src/dj_craft_tally/models.py:538
+msgid "Projects"
+msgstr "Proyectos"
+
+#: src/dj_craft_tally/models.py:548 src/dj_craft_tally/models.py:677
+msgid "The blueprint must belong to the project's workshop."
+msgstr "El plano debe pertenecer al taller del proyecto."
+
+#: src/dj_craft_tally/models.py:604
+msgid "Project status change"
+msgstr "Cambio de estado del proyecto"
+
+#: src/dj_craft_tally/models.py:605
+msgid "Project status changes"
+msgstr "Cambios de estado del proyecto"
+
+#: src/dj_craft_tally/models.py:618
+msgid "Project status history entries cannot be changed."
+msgstr ""
+"Las entradas del historial de estado del proyecto no se pueden cambiar."
+
+#: src/dj_craft_tally/models.py:622
+msgid "Project status history entries cannot be deleted."
+msgstr ""
+"Las entradas del historial de estado del proyecto no se pueden eliminar."
+
+#: src/dj_craft_tally/models.py:629
+msgid "Success"
+msgstr "Éxito"
+
+#: src/dj_craft_tally/models.py:630
+msgid "Failure"
+msgstr "Fallo"
+
+#: src/dj_craft_tally/models.py:631
+msgid "Partial success"
+msgstr "Éxito parcial"
+
+#: src/dj_craft_tally/models.py:659
+msgid "Project step"
+msgstr "Paso del proyecto"
+
+#: src/dj_craft_tally/models.py:660
+msgid "Project steps"
+msgstr "Pasos del proyecto"
+
+#: src/dj_craft_tally/models.py:681
+msgid "The equipment must belong to the project's workshop."
+msgstr "Las herramientas deben pertenecer al taller del proyecto."
+
+#: src/dj_craft_tally/models.py:712
+msgid "Project step measurement"
+msgstr "Medición del paso del proyecto"
+
+#: src/dj_craft_tally/models.py:713
+msgid "Project step measurements"
+msgstr "Mediciones de los pasos del proyecto"
+
+#: src/dj_craft_tally/models.py:727 src/dj_craft_tally/models.py:733
+msgid "Bulk updates of inventory records are not supported."
+msgstr "No se admiten actualizaciones masivas de registros de inventario."
+
+#: src/dj_craft_tally/models.py:730
+msgid "Bulk deletion of inventory records is not supported."
+msgstr "No se admite la eliminación masiva de registros de inventario."
+
+#: src/dj_craft_tally/models.py:736
+msgid "Bulk creation of inventory records is not supported."
+msgstr "No se admite la creación masiva de registros de inventario."
+
+#: src/dj_craft_tally/models.py:745
+msgid "Received"
+msgstr "Recibido"
+
+#: src/dj_craft_tally/models.py:746
+msgid "Produced"
+msgstr "Producido"
+
+#: src/dj_craft_tally/models.py:747
+msgid "Consumed"
+msgstr "Consumido"
+
+#: src/dj_craft_tally/models.py:748
+msgid "Adjusted"
+msgstr "Ajustado"
+
+#: src/dj_craft_tally/models.py:776
+msgid "Inventory transaction"
+msgstr "Movimiento de inventario"
+
+#: src/dj_craft_tally/models.py:777
+msgid "Inventory transactions"
+msgstr "Movimientos de inventario"
+
+#: src/dj_craft_tally/models.py:794
+msgid "The project must belong to the transaction's workshop."
+msgstr "El proyecto debe pertenecer al taller de la transacción."
+
+#: src/dj_craft_tally/models.py:799
+msgid "The project step must belong to the transaction's workshop."
+msgstr "El paso del proyecto debe pertenecer al taller de la transacción."
+
+#: src/dj_craft_tally/models.py:803
+msgid "The project step must belong to the selected project."
+msgstr "El paso del proyecto debe pertenecer al proyecto seleccionado."
+
+#: src/dj_craft_tally/models.py:817
+msgid "Posted inventory transactions cannot be changed."
+msgstr "Las transacciones de inventario publicadas no se pueden cambiar."
+
+#: src/dj_craft_tally/models.py:820
+msgid "Use post() to post an inventory transaction."
+msgstr "Usa post() para publicar una transacción de inventario."
+
+#: src/dj_craft_tally/models.py:830
+msgid "Posted inventory transactions cannot be deleted."
+msgstr "Las transacciones de inventario publicadas no se pueden eliminar."
+
+#: src/dj_craft_tally/models.py:840
+msgid "This inventory transaction is already posted."
+msgstr "Esta transacción de inventario ya ha sido publicada."
+
+#: src/dj_craft_tally/models.py:843
+msgid "An inventory transaction needs at least one line."
+msgstr "Una transacción de inventario necesita al menos una línea."
+
+#: src/dj_craft_tally/models.py:878
+msgid "Inventory transaction line"
+msgstr "Línea del movimiento de inventario"
+
+#: src/dj_craft_tally/models.py:879
+msgid "Inventory transaction lines"
+msgstr "Líneas de mov. de inventario"
+
+#: src/dj_craft_tally/models.py:893
+msgid "Lines cannot be added to a posted transaction."
+msgstr "No se pueden añadir líneas a una transacción publicada."
+
+#: src/dj_craft_tally/models.py:895
+msgid "The lot must belong to the selected material."
+msgstr "El lote debe pertenecer al material seleccionado."
+
+#: src/dj_craft_tally/models.py:902
+msgid "The material must belong to the transaction's workshop."
+msgstr "El material debe pertenecer al taller de la transacción."
+
+#: src/dj_craft_tally/models.py:914
+msgid "An inventory line cannot be moved to another transaction."
+msgstr "Una línea de inventario no se puede mover a otra transacción."
+
+#: src/dj_craft_tally/models.py:929
+msgid "Lines of posted inventory transactions cannot be changed."
+msgstr ""
+"Las líneas de transacciones de inventario publicadas no se pueden cambiar."
+
+#: src/dj_craft_tally/models.py:945
+msgid "Lines of posted inventory transactions cannot be deleted."
+msgstr ""
+"Las líneas de transacciones de inventario publicadas no se pueden eliminar."
+
+#: src/dj_craft_tally/models.py:954
+msgid "Prefix"
+msgstr "Prefijo"
+
+#: src/dj_craft_tally/models.py:955
+msgid "Suffix"
+msgstr "Sufijo"
+
+#: src/dj_craft_tally/models.py:965
+msgid "Currencies"
+msgstr "Divisas"
+
+#: src/dj_craft_tally/services.py:79
+msgid "Last week"
+msgstr "Última semana"
+
+#: src/dj_craft_tally/services.py:80
+msgid "Current quarter"
+msgstr "Último trimestre"
+
+#: src/dj_craft_tally/services.py:81
+msgid "Year to date"
+msgstr "Desde el 1 ene."
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:6
+msgid "crafttally dashboard"
+msgstr "Panel de control de crafttally"
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:230
+msgid "Projects by status"
+msgstr "Proyectos por estado"
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:244
+msgid "Material costs"
+msgstr "Lotes de material"
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:253
+msgid "currencies"
+msgstr "divisas"
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:271
+msgid "No purchases recorded yet."
+msgstr "Aún no se han registrado movimientos de inventario."
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:282
+msgid "Available runs"
+msgstr "Tiradas disponibles"
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:284
+msgid "Last made"
+msgstr "Última producción"
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:302
+msgid "No blueprints yet."
+msgstr "Aún no hay planos."
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:307
+msgid "Inventory activity"
+msgstr "Actividad de inventario"
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:314
+msgid "Type"
+msgstr "Tipo"
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:315
+msgid "Reference"
+msgstr "Referencia"
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:323
+msgid "Draft"
+msgstr "Borrador"
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:335
+msgid "No inventory movements recorded yet."
+msgstr "Aún no se han registrado movimientos de inventario."
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:340
+msgid "Materials running low"
+msgstr "Materiales con poco stock"
+
+#: src/dj_craft_tally/templates/admin/crafttally_index.html:363
+msgid "No materials tracked."
+msgstr "No hay materiales rastreados."

@@ -11,4 +11,7 @@ extend-ignore-re = [
 ]
 
 [files]
-extend-exclude = ["CHANGELOG.md"]
+extend-exclude = [
+  "CHANGELOG.md",
+  "src/dj_craft_tally/locale/*",
+]

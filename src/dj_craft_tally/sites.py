@@ -136,7 +136,7 @@ class CustomAdminSite(admin.AdminSite):
     def dashboard(self, request, extra_context=None):
         context = {
             **self.each_context(request),
-            "title": "Craft Tally",
+            "title": DjCraftTallyConfig.verbose_name,
             "subtitle": None,
             "app_list": self.get_app_list(request),
             **self.dashboard_context(request),

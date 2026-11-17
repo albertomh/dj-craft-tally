@@ -39,14 +39,15 @@
     display: block;
 }
 
-.ct-card:hover {
-    border-color: #79aec8;
-    filter: brightness(0.98);
-}
-
 .ct-card:focus-visible {
     outline: 2px solid var(--link-fg, #447e9b);
     outline-offset: 2px;
+}
+
+a.ct-card:hover {
+    cursor: pointer;
+    border-color: #79aec8;
+    filter: brightness(0.98);
 }
 
 .ct-status--planned {
@@ -132,11 +133,6 @@
     .ct-status-cards .ct-count {
         font-size: 1.2rem;
     }
-}
-
-.ct-expenditure-card:hover {
-    border-color: var(--hairline-color, #ddd);
-    filter: brightness(1);
 }
 
 .ct-expenditure-card ul {
