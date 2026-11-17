@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import TypedDict
 
 from django.db.models import Case, Sum, When
+from django.utils.translation import gettext_lazy as _
 
 from dj_craft_tally.models import MaterialLot
 
@@ -75,7 +76,7 @@ def expenditure_periods(*, as_of: date | None = None) -> list[TotalForPeriod]:
                 period_totals[code] = row[period]
 
     return [
-        {"key": "last_week", "label": "Last week", "totals": totals["last_week"]},
-        {"key": "quarter", "label": "Current quarter", "totals": totals["quarter"]},
-        {"key": "ytd", "label": "Year to date", "totals": totals["ytd"]},
+        {"key": "last_week", "label": _("Last week"), "totals": totals["last_week"]},
+        {"key": "quarter", "label": _("Current quarter"), "totals": totals["quarter"]},
+        {"key": "ytd", "label": _("Year to date"), "totals": totals["ytd"]},
     ]

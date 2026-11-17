@@ -150,6 +150,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("dimension", "scale_to_base", "name"),
+                "verbose_name": "Unit",
+                "verbose_name_plural": "Units",
                 "constraints": [
                     models.CheckConstraint(
                         condition=models.Q(("display_decimal_places__lte", 6)),

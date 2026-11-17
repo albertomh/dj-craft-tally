@@ -68,6 +68,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("status", "name"),
+                "verbose_name": "Project",
+                "verbose_name_plural": "Projects",
             },
         ),
         migrations.CreateModel(
@@ -128,6 +130,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("occurred_at", "recorded_at"),
+                "verbose_name": "Project status change",
+                "verbose_name_plural": "Project status changes",
                 "db_table": "crafttally_project_status_change",
                 "indexes": [
                     models.Index(

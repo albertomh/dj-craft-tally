@@ -77,6 +77,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("-occurred_at", "-recorded_at"),
+                "verbose_name": "Inventory transaction",
+                "verbose_name_plural": "Inventory transactions",
                 "db_table": "crafttally_inventory_tx",
             },
         ),
@@ -130,6 +132,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("transaction__occurred_at", "id"),
+                "verbose_name": "Inventory transaction line",
+                "verbose_name_plural": "Inventory transaction lines",
                 "db_table": "crafttally_inventory_tx_line",
             },
         ),

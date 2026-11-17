@@ -6,6 +6,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "local-demo-only-not-for-deployment"  # noqa: S105
 DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
+LANGUAGE_CODE = "en-gb"
+LANGUAGES = [
+    ("en-gb", "English (UK)"),
+    ("es-es", "Español"),
+    ("fr-fr", "Français"),
+]
 
 INSTALLED_APPS = [
     "demo_project",
@@ -21,6 +27,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -51,5 +58,4 @@ USE_TZ = True
 TIME_ZONE = "Europe/London"
 FORMAT_MODULE_PATH = ["demo_project.formats"]
 
-STATIC_URL = "static/"
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+STATIC_URL = "/static/"
