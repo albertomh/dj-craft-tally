@@ -10,9 +10,11 @@ from django.utils.translation import override
 from dj_craft_tally.models import (
     Blueprint,
     BlueprintMaterialRequirement,
+    Currency,
     InventoryTransaction,
     InventoryTransactionLine,
     Material,
+    MaterialLot,
     Project,
     Unit,
     Workshop,
@@ -101,6 +103,30 @@ def test_dashboard_context_reports_summary_metrics(dashboard_site, dashboard_req
     assert blueprint_entry["runs"] == int(stock_quantity / required_quantity)
     assert blueprint_entry["pk"] == blueprint.pk
     assert context["recent_transactions"][0].reference == "clay receipt"
+
+
+@pytest.mark.django_db
+def test_dashboard_context_formats_expenditure_periods(
+    dashboard_site, dashboard_request, material
+):
+    MaterialLot.objects.create(
+        material=material,
+        quantity_per_package=1,
+        received_at="2026-04-01T00:00Z",
+        purchase_amount=Decimal("12.50"),
+        purchase_currency=Currency.objects.get(code="GBP"),
+    )
+
+    context = dashboard_site.dashboard_context(dashboard_request)
+
+    assert context["has_expenditure"]
+    ytd = next(
+        period
+        for period in context["expenditure_periods"]
+        if period["label"] == "Year to date"
+    )
+    assert ytd["entries"][0]["code"] == "GBP"
+    assert "12.50" in str(ytd["entries"][0]["amount"])
 
 
 @pytest.mark.django_db

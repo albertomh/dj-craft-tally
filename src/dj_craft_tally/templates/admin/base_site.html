@@ -1,0 +1,9 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  {% if app_label == "crafttally" or opts.app_label == "crafttally" or not app_label and not opts %}
+    <link rel="stylesheet" href="{% static 'dj_craft_tally/css/craft_tally_admin.css' %}">
+  {% endif %}
+{% endblock %}
