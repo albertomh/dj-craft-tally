@@ -5,11 +5,27 @@ from decimal import Decimal
 import pytest
 from django.core.exceptions import ValidationError
 
-from dj_craft_tally.models import BlueprintMaterialRequirement, Currency, MaterialLot
+from dj_craft_tally.models import (
+    Blueprint,
+    BlueprintMaterialRequirement,
+    Currency,
+    Material,
+    MaterialLot,
+)
 
 
 @pytest.mark.django_db
-def test_lot_purchase_amount_is_optional_and_has_a_currency(material) -> None:
+def test_zero_output_has_no_cost_estimate(blueprint: Blueprint):
+    blueprint.output_quantity = Decimal("0")
+
+    result = blueprint.cost_per_output_unit()
+
+    assert result.cost_per_unit == {}
+    assert result.usages == ()
+
+
+@pytest.mark.django_db
+def test_lot_purchase_amount_is_optional_and_has_a_currency(material: Material) -> None:
     unpriced_lot = MaterialLot.objects.create(material=material, quantity_per_package=1)
     priced_lot = MaterialLot.objects.create(
         material=material,
@@ -25,7 +41,9 @@ def test_lot_purchase_amount_is_optional_and_has_a_currency(material) -> None:
 
 
 @pytest.mark.django_db
-def test_lot_purchase_amount_and_currency_must_be_recorded_together(material) -> None:
+def test_lot_purchase_amount_and_currency_must_be_recorded_together(
+    material: Material,
+) -> None:
     with pytest.raises(ValidationError, match="Select the currency"):
         MaterialLot.objects.create(
             material=material,
@@ -51,7 +69,7 @@ def test_lot_purchase_amount_and_currency_must_be_recorded_together(material) ->
 
 @pytest.mark.django_db
 def test_blueprint_cost_uses_newest_lots_and_previous_lot_for_shortfall(
-    blueprint, material
+    blueprint: Blueprint, material: Material
 ) -> None:
     blueprint.output_quantity = Decimal("2")
     blueprint.save(update_fields=["output_quantity"])
@@ -75,12 +93,12 @@ def test_blueprint_cost_uses_newest_lots_and_previous_lot_for_shortfall(
         purchase_currency=currency,
     )
 
-    assert blueprint.cost_per_output_unit() == {"GBP": Decimal("25")}
+    assert blueprint.cost_per_output_unit().cost_per_unit == {"GBP": Decimal("25")}
 
 
 @pytest.mark.django_db
 def test_blueprint_cost_returns_empty_when_lots_cannot_cover_requirement(
-    blueprint, material
+    blueprint: Blueprint, material: Material
 ) -> None:
     BlueprintMaterialRequirement.objects.create(
         blueprint=blueprint, material=material, quantity=Decimal("500")
@@ -92,4 +110,34 @@ def test_blueprint_cost_returns_empty_when_lots_cannot_cover_requirement(
         purchase_currency=Currency.objects.get(code="GBP"),
     )
 
-    assert blueprint.cost_per_output_unit() == {}
+    assert blueprint.cost_per_output_unit().cost_per_unit == {}
+
+
+@pytest.mark.django_db
+def test_newest_lot_fully_covering_requirement_excludes_older_lot(
+    blueprint: Blueprint, material: Material
+):
+    BlueprintMaterialRequirement.objects.create(
+        blueprint=blueprint, material=material, quantity=Decimal("5")
+    )
+    MaterialLot.objects.create(
+        material=material,
+        quantity_per_package=10,
+        received_at="2026-01-01T00:00Z",
+        purchase_amount=Decimal("100"),
+        purchase_currency_id="GBP",
+    )
+    newest = MaterialLot.objects.create(
+        material=material,
+        quantity_per_package=10,
+        received_at="2026-02-01T00:00Z",
+        purchase_amount=Decimal("20"),
+        purchase_currency_id="GBP",
+    )
+
+    result = blueprint.cost_per_output_unit()
+
+    assert result.cost_per_unit == {"GBP": Decimal("10")}
+    assert len(result.usages) == 1
+    assert result.usages[0].lot == newest
+    assert result.usages[0].quantity == Decimal("5")

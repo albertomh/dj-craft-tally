@@ -157,8 +157,8 @@ class BlueprintAdmin(admin.ModelAdmin):
         )
 
     @admin.display(description=_("Cost per output unit"))
-    def display_cost_per_output_unit(self, obj):
-        costs = obj.cost_per_output_unit()
+    def display_cost_per_output_unit(self, obj: Blueprint):
+        costs = obj.cost_per_output_unit().cost_per_unit
         if not costs:
             return "-"
         currencies = Currency.objects.in_bulk(costs)

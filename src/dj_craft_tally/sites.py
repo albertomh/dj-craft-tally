@@ -91,7 +91,7 @@ class CustomAdminSite(admin.AdminSite):
                             "amount": format_money(amount, currencies.get(code)),
                         }
                         for code, amount in sorted(
-                            blueprint.cost_per_output_unit().items()
+                            blueprint.cost_per_output_unit().cost_per_unit.items()
                         )
                     ],
                     "last_made": blueprint.last_made(),
