@@ -243,7 +243,8 @@ class MaterialLotAdmin(admin.ModelAdmin):
 
     @admin.display(description=_("Paid"), ordering="purchase_amount")
     def display_purchase_amount(self, obj):
-        return format_money(obj.purchase_amount, obj.purchase_currency)
+        formatted = format_money(obj.purchase_amount, obj.purchase_currency)
+        return format_html('<span class="ct-mono">{}</span>', formatted)
 
     def get_readonly_fields(self, request, obj=None):
         if obj:

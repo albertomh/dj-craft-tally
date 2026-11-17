@@ -62,6 +62,15 @@ class Command(BaseCommand):
         gram = Unit.objects.get(code="g")
         item = Unit.objects.get(code="item")
         gbp = Currency.objects.get(code="GBP")
+
+        def date_at_midnight(value):
+            return timezone.make_aware(datetime.combine(value, datetime.min.time()))
+
+        today = timezone.localdate()
+        quarter_start_month = ((today.month - 1) // 3) * 3 + 1
+        quarter_start = today.replace(month=quarter_start_month, day=1)
+        year_start = today.replace(month=1, day=1)
+        last_week = today - timedelta(days=6)
         pla = Material.objects.create(
             workshop=studio, name="Blue PLA filament", unit=gram
         )
@@ -123,7 +132,7 @@ class Command(BaseCommand):
             quantity_per_package=Decimal("1000"),
             received_at=jitter(),
             purchase_amount=Decimal("48.00"),
-            purchase_currency=gbp,
+            purchase_currency_id=gbp.code,
         )
         bolt_lot = MaterialLot.objects.create(
             material=bolts,
@@ -133,7 +142,7 @@ class Command(BaseCommand):
             quantity_per_package=Decimal("100"),
             received_at=jitter(),
             purchase_amount=Decimal("18.50"),
-            purchase_currency=gbp,
+            purchase_currency_id=gbp.code,
         )
         plywood_lot = MaterialLot.objects.create(
             material=plywood,
@@ -142,6 +151,8 @@ class Command(BaseCommand):
             package_count=2,
             quantity_per_package=Decimal("10"),
             received_at=jitter(),
+            purchase_amount=Decimal("72.00"),
+            purchase_currency_id="GBP",
         )
         vinyl_lot = MaterialLot.objects.create(
             material=vinyl,
@@ -150,6 +161,8 @@ class Command(BaseCommand):
             package_count=2,
             quantity_per_package=Decimal("10"),
             received_at=jitter(),
+            purchase_amount=Decimal("24.00"),
+            purchase_currency_id="GBP",
         )
         fabric_lot = MaterialLot.objects.create(
             material=fabric,
@@ -158,6 +171,39 @@ class Command(BaseCommand):
             package_count=1,
             quantity_per_package=Decimal("10"),
             received_at=jitter(),
+            purchase_amount=Decimal("35.00"),
+            purchase_currency_id="GBP",
+        )
+
+        MaterialLot.objects.create(
+            material=pla,
+            reference="PLA-BLUE-YEAR-START",
+            supplier="Example Filament Co.",
+            package_count=1,
+            quantity_per_package=Decimal("1000"),
+            received_at=date_at_midnight(year_start),
+            purchase_amount=Decimal("22.00"),
+            purchase_currency_id="GBP",
+        )
+        MaterialLot.objects.create(
+            material=bolts,
+            reference="M3-CURRENT-QUARTER",
+            supplier="Example Hardware",
+            package_count=1,
+            quantity_per_package=Decimal("100"),
+            received_at=date_at_midnight(quarter_start),
+            purchase_amount=Decimal("19.00"),
+            purchase_currency_id="GBP",
+        )
+        MaterialLot.objects.create(
+            material=vinyl,
+            reference="VINYL-LAST-WEEK",
+            supplier="Example Signs Supply",
+            package_count=1,
+            quantity_per_package=Decimal("10"),
+            received_at=date_at_midnight(last_week),
+            purchase_amount=Decimal("17.50"),
+            purchase_currency_id="GBP",
         )
         lots = {
             pla: pla_lot,

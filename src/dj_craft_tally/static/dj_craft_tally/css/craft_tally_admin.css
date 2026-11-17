@@ -1,0 +1,219 @@
+.ct-mono {
+    font-family: monospace;
+    font-size: 0.7rem;
+}
+
+.ct-dashboard {
+    max-width: 900px;
+}
+
+.ct-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.ct-status-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.ct-status-cards .ct-card {
+    min-width: 0;
+}
+
+.ct-card {
+    flex: 1 1 150px;
+    min-width: 140px;
+    padding: 14px 16px;
+    border: 1px solid var(--hairline-color, #ddd);
+    border-radius: 6px;
+    background: var(--body-bg, #fff);
+    /* !important overrides the admin base.css `a:not(...)` underline rule,
+    whose :not() specificity outranks plain class selectors. */
+    text-decoration: none !important;
+    color: inherit;
+    display: block;
+}
+
+.ct-card:hover {
+    border-color: #79aec8;
+    filter: brightness(0.98);
+}
+
+.ct-card:focus-visible {
+    outline: 2px solid var(--link-fg, #447e9b);
+    outline-offset: 2px;
+}
+
+.ct-status--planned {
+    --ct-bg: #fff3cd;
+    --ct-fg: #664d03;
+}
+
+.ct-status--active {
+    --ct-bg: #d4edda;
+    --ct-fg: #155724;
+}
+
+.ct-status--stalled {
+    --ct-bg: #fff3e0;
+    --ct-fg: #e65100;
+}
+
+.ct-status--complete {
+    --ct-bg: #cfe2f3;
+    --ct-fg: #084298;
+}
+
+.ct-status--abandoned {
+    --ct-bg: #e9ecef;
+    --ct-fg: #495057;
+}
+
+/* Default (count == 0): plain card, muted count. */
+.ct-status-card {
+    background: var(--body-bg, #fff);
+}
+
+.ct-status-card .ct-count {
+    color: var(--body-quiet-color, #495057);
+}
+
+/* Count > 0: tinted card, coloured count and label. */
+.ct-status--with-background {
+    background: var(--ct-bg);
+    border-color: var(--ct-bg);
+}
+
+.ct-status--with-background:hover {
+    border-color: var(--ct-fg);
+}
+
+.ct-status--with-background .ct-count,
+.ct-status--with-background .ct-label {
+    color: var(--ct-fg);
+}
+
+.ct-card .ct-count {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.ct-card .ct-label {
+    color: var(--body-quiet-color, #666);
+    font-size: 0.85rem;
+}
+
+/* Must stay below the .ct-count / .ct-label rules above. */
+@media (max-width: 640px),
+(orientation: portrait) and (max-width: 767px) {
+    .ct-status-cards {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .ct-status-cards .ct-card {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        padding: 8px 12px;
+    }
+
+    .ct-status-cards .ct-label {
+        order: -1;
+        font-size: 1rem;
+    }
+
+    .ct-status-cards .ct-count {
+        font-size: 1.2rem;
+    }
+}
+
+.ct-expenditure-card:hover {
+    border-color: var(--hairline-color, #ddd);
+    filter: brightness(1);
+}
+
+.ct-expenditure-card ul {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+}
+
+.ct-expenditure-card li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.85rem;
+    padding: 2px 0;
+}
+
+.ct-expenditure-card li .ct-mono {
+    font-size: 0.85rem;
+}
+
+.ct-section {
+    margin: 24px 0;
+}
+
+.ct-section h2 {
+    font-size: 1.1rem;
+    padding-bottom: 2px;
+}
+
+.ct-table-wrap {
+    overflow-x: auto;
+}
+
+table.ct-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+}
+
+table.ct-table th,
+table.ct-table td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--hairline-color, #eee);
+}
+
+table.ct-table th {
+    border: 0px;
+    background-color: var(--breadcrumbs-bg);
+    color: #ffffff
+}
+
+table.ct-table .ct-right {
+    text-align: right;
+}
+
+table.ct-table a {
+    color: var(--link-fg, #447e9b);
+    text-decoration: none;
+}
+
+table.ct-table a:hover {
+    text-decoration: underline;
+}
+
+.ct-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #fff3cd;
+    color: #664d03;
+    border: 1px solid #ffeeba;
+    font-size: 0.75rem;
+}
+
+.ct-empty {
+    color: var(--body-quiet-color, #888);
+    font-style: italic;
+    padding: 8px 0;
+}
