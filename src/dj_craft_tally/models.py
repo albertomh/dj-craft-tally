@@ -30,6 +30,8 @@ class Workshop(models.Model):
     created_at = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
+        verbose_name = _("Workshop")
+        verbose_name_plural = _("Workshops")
         ordering = ("name",)
 
     def __str__(self) -> str:
@@ -56,6 +58,8 @@ class WorkshopMembership(models.Model):
     created_at = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
+        verbose_name = _("Workshop membership")
+        verbose_name_plural = _("Workshop memberships")
         db_table = "crafttally_workshop_membership"
         ordering = ("workshop", "user")
         constraints = (
@@ -109,6 +113,8 @@ class Material(models.Model):
     created_at = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
+        verbose_name = _("Material")
+        verbose_name_plural = _("Materials")
         ordering = ("name",)
         constraints = (
             models.UniqueConstraint(
@@ -225,6 +231,8 @@ class MaterialLot(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        verbose_name = _("Material lot")
+        verbose_name_plural = _("Material lots")
         db_table = "crafttally_material_lot"
         ordering = ("material__name", "reference")
         constraints = (
@@ -322,6 +330,7 @@ class Equipment(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        verbose_name = _("Equipment")
         verbose_name_plural = _("Equipment")
         ordering = ("name",)
         constraints = (
@@ -356,6 +365,8 @@ class Blueprint(models.Model):
     created_at = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
+        verbose_name = _("Blueprint")
+        verbose_name_plural = _("Blueprints")
         ordering = ("name",)
         constraints = (
             models.UniqueConstraint(
@@ -405,6 +416,8 @@ class BlueprintMaterialRequirement(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        verbose_name = _("Blueprint material requirement")
+        verbose_name_plural = _("Blueprint material requirements")
         db_table = "crafttally_blueprint_material_req"
         ordering = ("blueprint__name", "material__name")
         constraints = (
@@ -472,6 +485,8 @@ class Unit(models.Model):
     )
 
     class Meta:
+        verbose_name = _("Unit")
+        verbose_name_plural = _("Units")
         ordering = ("dimension", "scale_to_base", "name")
         constraints = (
             models.CheckConstraint(
@@ -519,6 +534,8 @@ class Project(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
+        verbose_name = _("Project")
+        verbose_name_plural = _("Projects")
         ordering = ("status", "name")
 
     def __str__(self) -> str:
@@ -584,6 +601,8 @@ class ProjectStatusChange(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        verbose_name = _("Project status change")
+        verbose_name_plural = _("Project status changes")
         db_table = "crafttally_project_status_change"
         ordering = ("occurred_at", "recorded_at")
         indexes = (models.Index(fields=["project", "occurred_at"]),)
@@ -637,6 +656,8 @@ class ProjectStep(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        verbose_name = _("Project step")
+        verbose_name_plural = _("Project steps")
         db_table = "crafttally_project_step"
         ordering = ("project", "sequence")
         constraints = (
@@ -688,6 +709,8 @@ class ProjectStepMeasurement(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        verbose_name = _("Project step measurement")
+        verbose_name_plural = _("Project step measurements")
         db_table = "crafttally_project_step_measurement"
         ordering = ("project_step__sequence", "name")
         constraints = (
@@ -750,6 +773,8 @@ class InventoryTransaction(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        verbose_name = _("Inventory transaction")
+        verbose_name_plural = _("Inventory transactions")
         db_table = "crafttally_inventory_tx"
         ordering = ("-occurred_at", "-recorded_at")
         indexes = (
@@ -850,6 +875,8 @@ class InventoryTransactionLine(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
+        verbose_name = _("Inventory transaction line")
+        verbose_name_plural = _("Inventory transaction lines")
         db_table = "crafttally_inventory_tx_line"
         ordering = ("transaction__occurred_at", "id")
         constraints = (

@@ -37,6 +37,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("name",),
+                "verbose_name": "Workshop",
+                "verbose_name_plural": "Workshops",
             },
         ),
         migrations.CreateModel(
@@ -84,6 +86,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("workshop", "user"),
+                "verbose_name": "Workshop membership",
+                "verbose_name_plural": "Workshop memberships",
                 "db_table": "crafttally_workshop_membership",
                 "constraints": [
                     models.UniqueConstraint(

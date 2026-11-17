@@ -63,6 +63,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("name",),
+                "verbose_name": "Blueprint",
+                "verbose_name_plural": "Blueprints",
             },
         ),
         migrations.CreateModel(
@@ -108,6 +110,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("blueprint__name", "material__name"),
+                "verbose_name": "Blueprint material requirement",
+                "verbose_name_plural": "Blueprint material requirements",
                 "db_table": "crafttally_blueprint_material_req",
             },
         ),

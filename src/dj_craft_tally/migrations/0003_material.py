@@ -65,6 +65,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("name",),
+                "verbose_name": "Material",
+                "verbose_name_plural": "Materials",
             },
         ),
         migrations.CreateModel(
@@ -105,6 +107,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("material__name", "reference"),
+                "verbose_name": "Material lot",
+                "verbose_name_plural": "Material lots",
                 "db_table": "crafttally_material_lot",
             },
         ),

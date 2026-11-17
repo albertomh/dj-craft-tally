@@ -11,26 +11,16 @@ def seed_currencies(apps, schema_editor):
     Currency.objects.bulk_create(
         [
             Currency(
-                code="GBP",
-                name="British pound",
-                symbol="£",
-                symbol_position="prefix",
+                code="GBP", name="British pound", symbol="£", symbol_position="prefix"
             ),
             Currency(code="EUR", name="Euro", symbol="€", symbol_position="suffix"),
-            Currency(
-                code="USD",
-                name="US dollar",
-                symbol="$",
-                symbol_position="prefix",
-            ),
+            Currency(code="USD", name="US dollar", symbol="$", symbol_position="prefix"),
         ]
     )
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("crafttally", "0008_inventory_ledger"),
-    ]
+    dependencies = [("crafttally", "0008_inventory_ledger")]
 
     operations = [
         migrations.CreateModel(

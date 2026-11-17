@@ -86,6 +86,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("project", "sequence"),
+                "verbose_name": "Project step",
+                "verbose_name_plural": "Project steps",
                 "db_table": "crafttally_project_step",
             },
         ),
@@ -132,6 +134,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ("project_step__sequence", "name"),
+                "verbose_name": "Project step measurement",
+                "verbose_name_plural": "Project step measurements",
                 "db_table": "crafttally_project_step_measurement",
             },
         ),

@@ -72,6 +72,7 @@
 - Describe blueprint outputs & material requirements.
 - Record material lots and inventory movements.
 - Record an optional purchase amount and currency for each material delivery.
+- i18n ready, with translation packs for Spanish & French.
 
 See the [documentation](https://albertomh.github.io/dj-craft-tally/) for an admin
 walkthrough.
@@ -138,3 +139,30 @@ uv run zensical serve -a localhost:9000
 ```
 
 Pushes to `main` that change documentation deploy to GitHub Pages.
+
+### Develop translations
+
+The package uses Django gettext catalogs under
+`src/dj_craft_tally/locale/<language>_<territory>/LC_MESSAGES/`. Mark user-facing
+Python and template strings for translation, then regenerate the catalogs from
+the package directory:
+
+```sh
+cd src/dj_craft_tally && \
+uv run django-admin makemessages -l es_ES -l fr_FR
+```
+
+Review and update the generated `.po` files, then compile them to `.mo` files:
+
+```sh
+cd src/dj_craft_tally && \
+msgfmt -o locale/es_ES/LC_MESSAGES/django.mo \
+  locale/es_ES/LC_MESSAGES/django.po
+msgfmt -o locale/fr_FR/LC_MESSAGES/django.mo \
+  locale/fr_FR/LC_MESSAGES/django.po
+```
+
+The demo enables `es-es` and `fr-fr` and exposes Django's standard language
+switching endpoint at `/i18n/`. Run the demo as above, switch the language in
+the session, and visit `/admin/crafttally/` to verify model labels, admin
+actions, dashboard text, validation messages, and number/date formatting.
