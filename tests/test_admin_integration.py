@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.test import RequestFactory, override_settings
 from django.utils.translation import override
 
-import dj_craft_tally.admin as tally_admin
+import dj_craft_tally.admin as ct_admin
 from dj_craft_tally.models import (
     Blueprint,
     BlueprintMaterialRequirement,
@@ -24,7 +24,7 @@ from dj_craft_tally.models import (
 
 @pytest.mark.django_db
 def test_material_admin_displays_stock_using_unit_precision(workshop, item, gram):
-    material_admin = admin.site._registry[Material]
+    material_admin: ct_admin.MaterialAdmin = admin.site._registry[Material]
     assert "display_stock_balance" in material_admin.list_display
     assert "kind" in material_admin.list_display
     assert "kind" in material_admin.list_filter
@@ -52,13 +52,13 @@ def test_material_admin_displays_stock_using_unit_precision(workshop, item, gram
 
 
 def test_project_status_change_admin_renders_missing_project_as_dash():
-    status_change_admin = admin.site._registry[tally_admin.ProjectStatusChange]
+    status_change_admin = admin.site._registry[ct_admin.ProjectStatusChange]
 
     assert status_change_admin.project_link(SimpleNamespace(project=None)) == "-"
 
 
 @pytest.mark.django_db
-def test_material_lot_admin_displays_purchase_amount(material):
+def test_material_lot_admin_displays_purchase_amount(material: Material):
     lot = MaterialLot.objects.create(
         material=material,
         quantity_per_package=1,
@@ -71,7 +71,28 @@ def test_material_lot_admin_displays_purchase_amount(material):
         str(lot_admin.display_purchase_amount(lot))
         == '<span class="ct-mono">£1.25</span>'
     )
-    assert tally_admin.format_money(None, Currency.objects.get(code="GBP")) is None
+    assert ct_admin.format_money(None, Currency.objects.get(code="GBP")) is None
+
+
+@pytest.mark.django_db
+def test_blueprint_admin_displays_cost_per_output_unit(blueprint, material):
+    BlueprintMaterialRequirement.objects.create(
+        blueprint=blueprint, material=material, quantity=Decimal("2")
+    )
+    MaterialLot.objects.create(
+        material=material,
+        quantity_per_package=2,
+        purchase_amount=Decimal("12.50"),
+        purchase_currency=Currency.objects.get(code="GBP"),
+    )
+
+    blueprint_admin: ct_admin.BlueprintAdmin = admin.site._registry[Blueprint]
+
+    assert "display_cost_per_output_unit" in blueprint_admin.list_display
+    assert (
+        str(blueprint_admin.display_cost_per_output_unit(blueprint))
+        == '<span class="ct-mono">£12.50</span>'
+    )
 
 
 def test_material_lot_admin_places_currency_before_amount_and_hides_help_text():
@@ -93,7 +114,7 @@ def test_material_lot_admin_places_currency_before_amount_and_hides_help_text():
 def test_format_money_normalizes_negative_zero_and_supports_suffix_currency():
     euro = Currency.objects.get(code="EUR")
 
-    assert str(tally_admin.format_money(Decimal("-0.001"), euro)) == "0.00 €"
+    assert str(ct_admin.format_money(Decimal("-0.001"), euro)) == "0.00 €"
 
 
 @pytest.mark.django_db
@@ -175,7 +196,7 @@ def test_inventory_transaction_line_admin_orders_by_parent_occurrence(workshop, 
 def test_admin_changelists_use_human_labels_and_unit_precision(
     client, workshop, item, gram
 ):
-    assert tally_admin.format_quantity(None, item) is None
+    assert ct_admin.format_quantity(None, item) is None
     user = get_user_model().objects.create_superuser(username="admin", password="test")
     blueprint = Blueprint.objects.create(
         workshop=workshop,

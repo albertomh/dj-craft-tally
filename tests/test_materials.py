@@ -9,7 +9,7 @@ from dj_craft_tally.models import Material, MaterialLot
 
 
 @pytest.mark.django_db
-def test_material_lot_records_package_count_and_contents(material) -> None:
+def test_material_lot_records_package_count_and_contents(material: Material) -> None:
     lot = MaterialLot.objects.create(
         material=material, package_count=10, quantity_per_package=Decimal("500")
     )
@@ -35,7 +35,7 @@ def test_material_lot_records_package_count_and_contents(material) -> None:
 
 
 @pytest.mark.django_db
-def test_invalid_lot_does_not_record_a_receipt(material):
+def test_invalid_lot_does_not_record_a_receipt(material: Material):
     with pytest.raises(ValidationError):
         MaterialLot.objects.create(
             material=material, package_count=0, quantity_per_package=1
@@ -53,7 +53,7 @@ def test_invalid_lot_does_not_record_a_receipt(material):
 
 
 @pytest.mark.django_db
-def test_safe_bulk_mutations_and_lot_bulk_creation_rules(material):
+def test_safe_bulk_mutations_and_lot_bulk_creation_rules(material: Material):
     Material.objects.filter(pk=material.pk).update(name="Porcelain")
     material.name = "Stoneware"
     Material.objects.bulk_update([material], ["name"])
@@ -66,7 +66,7 @@ def test_safe_bulk_mutations_and_lot_bulk_creation_rules(material):
 
 
 @pytest.mark.django_db
-def test_material_lot_admin_locks_receipt_fields_after_creation(material):
+def test_material_lot_admin_locks_receipt_fields_after_creation(material: Material):
     lot = MaterialLot.objects.create(material=material, quantity_per_package=1)
     lot_admin = admin.site._registry[MaterialLot]
     request = RequestFactory().get("/")

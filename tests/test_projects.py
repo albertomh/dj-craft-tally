@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 
-import dj_craft_tally.admin as tally_admin
+import dj_craft_tally.admin as ct_admin
 from dj_craft_tally.models import Blueprint, Project, Unit, Workshop
 
 
@@ -48,9 +48,9 @@ def test_project_status_history_entries_cannot_be_changed() -> None:
 
 def test_project_status_history_inline_cannot_add_records():
     request = RequestFactory().get("/")
-    assert not tally_admin.ProjectStatusChangeInline(
-        Project, admin.site
-    ).has_add_permission(request)
+    assert not ct_admin.ProjectStatusChangeInline(Project, admin.site).has_add_permission(
+        request
+    )
 
 
 @pytest.mark.django_db
@@ -65,7 +65,7 @@ def test_project_status_history_inline_orders_newest_first():
     request = RequestFactory().get("/")
     request.user = get_user_model()(is_staff=True, is_superuser=True)
 
-    changes = tally_admin.ProjectStatusChangeInline(Project, admin.site).get_queryset(
+    changes = ct_admin.ProjectStatusChangeInline(Project, admin.site).get_queryset(
         request
     )
 

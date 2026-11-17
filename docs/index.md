@@ -68,7 +68,8 @@ with permission to manage the app's models.
    workshop, kind, and occurrence date. Then create an **Inventory transaction
    line** linked to it and the material. Quantities are signed: for example,
    enter `500` for stock received or `-42.5` for stock consumed, in the
-   material's stock unit. A line may also reference a lot of that material.
+   material's stock unit. Select the lot when the movement belongs to a known
+   lot, including when recording consumption or correcting a lot's quantity.
    To use a different unit, first convert the amount to the material's stock
    unit before entering it.
    Post the transaction from its admin list after entering its lines. Drafts do
@@ -82,7 +83,12 @@ with permission to manage the app's models.
    a blueprint has no requirements; it does not reserve stock for other work.
    Each unit's display decimal places control how its stock balance is rounded
    in admin. Hover over a balance to see the exact value; stored quantities and
-   capacity calculations retain their full precision.
+   capacity calculations retain their full precision. Cost estimates use remaining
+   posted quantities from priced lots, oldest receipt first. An undated lot follows
+   dated lots. A nonzero balance of posted movements without a lot makes the cost
+   estimate unavailable, since those quantities cannot be attributed to a lot. To
+   reconcile one, post a reversing unallocated movement and a corresponding movement
+   against the appropriate lot. The original entries remain in the audit trail.
 5. Create a **Project**, optionally linked to a blueprint in the same workshop.
    Record work as ordered **Project steps**, with optional equipment and
    measurements. Change the project status as work progresses; status changes

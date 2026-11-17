@@ -68,10 +68,16 @@ def test_dashboard_context_reports_summary_metrics(dashboard_site, dashboard_req
     blueprint = Blueprint.objects.create(
         workshop=workshop, name="Cup", output_name="Cup", output_unit=item
     )
-    stock_quantity = Decimal("10")
+    stock_quantity = Decimal("8")
     required_quantity = Decimal("2")
     BlueprintMaterialRequirement.objects.create(
         blueprint=blueprint, material=material, quantity=required_quantity
+    )
+    lot = MaterialLot.objects.create(
+        material=material,
+        quantity_per_package=required_quantity,
+        purchase_amount=Decimal("12.50"),
+        purchase_currency=Currency.objects.get(code="GBP"),
     )
     stock = InventoryTransaction.objects.create(
         workshop=workshop,
@@ -80,7 +86,7 @@ def test_dashboard_context_reports_summary_metrics(dashboard_site, dashboard_req
         reference="clay receipt",
     )
     InventoryTransactionLine.objects.create(
-        transaction=stock, material=material, quantity=stock_quantity
+        transaction=stock, material=material, material_lot=lot, quantity=stock_quantity
     )
     stock.post()
     project = Project.objects.create(workshop=workshop, name="Kitchen tiles")
@@ -100,9 +106,14 @@ def test_dashboard_context_reports_summary_metrics(dashboard_site, dashboard_req
     } in context["projects_by_status"]
     (blueprint_entry,) = context["blueprints"]
     assert blueprint_entry["name"] == "Cup"
-    assert blueprint_entry["runs"] == int(stock_quantity / required_quantity)
+    assert blueprint_entry["runs"] == int(
+        (stock_quantity + required_quantity) / required_quantity
+    )
+    assert "12.50" in str(blueprint_entry["cost"][0]["amount"])
     assert blueprint_entry["pk"] == blueprint.pk
-    assert context["recent_transactions"][0].reference == "clay receipt"
+    assert "clay receipt" in {
+        transaction.reference for transaction in context["recent_transactions"]
+    }
 
 
 @pytest.mark.django_db
