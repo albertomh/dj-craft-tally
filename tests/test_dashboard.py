@@ -87,7 +87,7 @@ def test_dashboard_context_reports_summary_metrics(dashboard_site, dashboard_req
     context = dashboard_site.dashboard_context(dashboard_request)
 
     assert context["workshop_count"] == 1
-    assert context["material_count"] == 1
+    assert context["material_count"] == Material.objects.count()
     assert context["blueprint_count"] == 1
     assert context["project_count"] == 1
     assert {
@@ -117,7 +117,7 @@ def test_dashboard_renders(dashboard_site, dashboard_request, workshop, item, gr
 
     content = render_dashboard(dashboard_site, dashboard_request)
 
-    assert "Workshop dashboard" in content
+    assert "Craft Tally" in content
     assert "Available output" in content
     assert "Inventory activity" in content
     assert "No inventory movements recorded yet." in content

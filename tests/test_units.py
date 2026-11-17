@@ -52,7 +52,7 @@ def test_unit_scale_cannot_exceed_the_supported_range() -> None:
 
 
 @pytest.mark.django_db
-def test_unit_display_precision_is_editable_and_bounded(gram):
+def test_unit_display_precision_is_bounded_and_not_editable(gram):
     gram.display_decimal_places = 3
     gram.full_clean()
     gram.save()
@@ -66,4 +66,4 @@ def test_unit_display_precision_is_editable_and_bounded(gram):
     request.user = get_user_model().objects.create_superuser(
         username="admin", password="test"
     )
-    assert "display_decimal_places" in unit_admin.get_form(request).base_fields
+    assert unit_admin.get_form(request).base_fields.keys() == {"code"}

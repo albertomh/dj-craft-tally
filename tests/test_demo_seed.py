@@ -52,6 +52,7 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
         assert first_counts["crafttally_material_lot"] > 0
         assert first_counts["crafttally_blueprint"] > 0
         assert first_counts["crafttally_project"] > 0
+        assert first_counts["crafttally_currency"] > 0
         assert first_counts["crafttally_inventory_tx"] > 0
         assert first_counts["crafttally_inventory_tx_line"] > 0
 
@@ -80,6 +81,13 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
                 "select count(distinct status) from crafttally_project"
             ).fetchone()[0]
             > 1
+        )
+        assert (
+            connection.execute(
+                "select count(*) from crafttally_material_lot "
+                "where purchase_amount is not null and purchase_currency_id is not null"
+            ).fetchone()[0]
+            > 0
         )
 
     result = run("seed_demo")

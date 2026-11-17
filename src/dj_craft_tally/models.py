@@ -17,6 +17,7 @@ from dj_craft_tally.identifiers import uuid7
 
 QUANTITY_MAX_DIGITS = 15
 QUANTITY_DECIMAL_PLACES = 6
+MONEY_DECIMAL_PLACES = 2
 MAX_SCALE_TO_BASE = Decimal("999999999.999999")
 
 
@@ -205,6 +206,22 @@ class MaterialLot(models.Model):
         validators=[MinValueValidator(Decimal("0.000001"))],
     )
     received_at = models.DateTimeField(null=True, blank=True)
+    purchase_amount = models.DecimalField(
+        null=True,
+        blank=True,
+        max_digits=QUANTITY_MAX_DIGITS,
+        decimal_places=MONEY_DECIMAL_PLACES,
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text=_("Amount paid for this delivery."),
+    )
+    purchase_currency = models.ForeignKey(
+        "Currency",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="purchased_lots",
+        help_text=_("Currency of the amount paid for this delivery."),
+    )
     notes = models.TextField(blank=True)
 
     class Meta:
@@ -222,8 +239,19 @@ class MaterialLot(models.Model):
 
     def clean(self) -> None:
         super().clean()
+        errors = {}
         if self.package_count is not None and self.package_count < 1:
-            raise ValidationError({"package_count": _("Enter at least one package.")})
+            errors["package_count"] = _("Enter at least one package.")
+        if self.purchase_amount is None and self.purchase_currency_id:
+            errors["purchase_amount"] = _(
+                "Enter the amount paid when selecting a purchase currency."
+            )
+        if self.purchase_amount is not None and not self.purchase_currency_id:
+            errors["purchase_currency"] = _(
+                "Select the currency of the amount paid for this delivery."
+            )
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args, **kwargs) -> None:
         if not self.reference:
@@ -890,3 +918,26 @@ class InventoryTransactionLine(models.Model):
                     _("Lines of posted inventory transactions cannot be deleted.")
                 )
             return super().delete(*args, **kwargs)
+
+
+class Currency(models.Model):
+    """A currency and its display convention for monetary values."""
+
+    class SymbolPosition(models.TextChoices):
+        PREFIX = "prefix", _("Prefix")
+        SUFFIX = "suffix", _("Suffix")
+
+    code = models.CharField(primary_key=True, max_length=3)
+    name = models.CharField(max_length=100)
+    symbol = models.CharField(max_length=10)
+    symbol_position = models.CharField(
+        max_length=6, choices=SymbolPosition.choices, default=SymbolPosition.PREFIX
+    )
+
+    class Meta:
+        verbose_name_plural = _("Currencies")
+        db_table = "crafttally_currency"
+        ordering = ("code",)
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.code})"
