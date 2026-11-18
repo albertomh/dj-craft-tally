@@ -11,6 +11,9 @@ from django.utils.translation import gettext_lazy as _
 
 from dj_craft_tally.display import format_money, format_quantity
 from dj_craft_tally.models import (
+    Activity,
+    ActivityMaterial,
+    ActivityMeasurement,
     Blueprint,
     BlueprintMaterialRequirement,
     Currency,
@@ -21,8 +24,6 @@ from dj_craft_tally.models import (
     MaterialLot,
     Project,
     ProjectStatusChange,
-    ProjectStep,
-    ProjectStepMeasurement,
     Unit,
     Workshop,
     WorkshopMembership,
@@ -391,35 +392,37 @@ class ProjectStatusChangeAdmin(admin.ModelAdmin):
         return False
 
 
-class ProjectStepMeasurementInline(admin.TabularInline):
-    model = ProjectStepMeasurement
+class ActivityMeasurementInline(admin.TabularInline):
+    model = ActivityMeasurement
     extra = 0
     formfield_overrides: ClassVar = _textarea_overrides(rows=1, min_width=200)
 
 
-@admin.register(ProjectStep)
-class ProjectStepAdmin(admin.ModelAdmin):
-    inlines: ClassVar = (ProjectStepMeasurementInline,)
+class ActivityMaterialInline(admin.TabularInline):
+    model = ActivityMaterial
+    extra = 0
+
+
+@admin.register(Activity)
+class ActivityAdmin(admin.ModelAdmin):
+    inlines: ClassVar = (
+        ActivityMaterialInline,
+        ActivityMeasurementInline,
+    )
     list_display: ClassVar = (
-        "project",
-        "sequence",
-        "name",
         "reference",
+        "project",
+        "name",
+        "workshop",
         "equipment",
         "outcome",
         "occurred_at",
     )
-    list_select_related: ClassVar = ("project", "equipment")
-    list_filter: ClassVar = ("outcome", "equipment")
+    list_select_related: ClassVar = ("workshop", "project", "equipment")
+    list_filter: ClassVar = ("workshop", "outcome", "equipment")
     formfield_overrides: ClassVar = _textarea_overrides(
         rows=2, min_width=_WIDE_TEXTAREA_MIN_WIDTH
     )
-
-    def formfield_for_dbfield(self, db_field, request, **kwargs):
-        form_field = super().formfield_for_dbfield(db_field, request, **kwargs)
-        if db_field.name == "sequence":
-            form_field.widget.attrs["min"] = 1
-        return form_field
 
 
 class InventoryTransactionLineInline(admin.TabularInline):
@@ -451,11 +454,11 @@ class InventoryTransactionAdmin(admin.ModelAdmin):
         "workshop",
         "kind",
         "project_link",
-        "project_step",
+        "activity",
         "reference",
         "posted",
     )
-    list_select_related: ClassVar = ("workshop", "project", "project_step")
+    list_select_related: ClassVar = ("workshop", "project", "activity")
     list_filter: ClassVar = ("workshop", "kind")
 
     @admin.display(description=_("Project"))

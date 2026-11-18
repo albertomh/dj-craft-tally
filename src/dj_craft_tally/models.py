@@ -310,7 +310,7 @@ class MaterialLot(models.Model):
 
 
 class Equipment(models.Model):
-    """A workshop machine or tool used to carry out project steps."""
+    """A workshop machine or tool used to carry out activities."""
 
     class Kind(models.TextChoices):
         THREE_D_PRINTER = "3d_printer", _("3D printer")
@@ -588,8 +588,26 @@ class Unit(models.Model):
         return self.symbol
 
 
+class ProjectQuerySet(models.QuerySet):
+    def update(self, **kwargs):
+        if {"workshop", "workshop_id"} & kwargs.keys():
+            raise ValidationError(
+                _("Change a project's workshop through the model instance.")
+            )
+        return super().update(**kwargs)
+
+    def bulk_update(self, objs, fields, batch_size=None):
+        if {"workshop", "workshop_id"} & set(fields):
+            raise ValidationError(
+                _("Change a project's workshop through the model instance.")
+            )
+        return super().bulk_update(objs, fields, batch_size=batch_size)
+
+
 class Project(models.Model):
     """A creative undertaking, optionally based on a reusable blueprint."""
+
+    objects = ProjectQuerySet.as_manager()
 
     class Status(models.TextChoices):
         PLANNED = "planned", _("Planned")
@@ -625,6 +643,21 @@ class Project(models.Model):
 
     def clean(self) -> None:
         super().clean()
+        if self.pk and not self._state.adding:
+            original = (
+                type(self)
+                .objects.filter(pk=self.pk)
+                .values_list("workshop_id", flat=True)
+                .first()
+            )
+            if (
+                original is not None
+                and original != self.workshop_id
+                and self.activities.exists()
+            ):
+                raise ValidationError(
+                    {"workshop": _("A project with activities cannot change workshop.")}
+                )
         if self.blueprint_id and self.blueprint.workshop_id != self.workshop_id:
             raise ValidationError(
                 {"blueprint": _("The blueprint must belong to the project's workshop.")}
@@ -704,8 +737,29 @@ class ProjectStatusChange(models.Model):
         raise ValidationError(_("Project status history entries cannot be deleted."))
 
 
-class ProjectStep(models.Model):
-    """One ordered physical operation carried out as part of a project."""
+class ActivityQuerySet(models.QuerySet):
+    def update(self, **kwargs):
+        if {"workshop", "workshop_id", "project", "project_id"} & kwargs.keys():
+            raise ValidationError(
+                _("Change activity ownership through the model instance.")
+            )
+        return super().update(**kwargs)
+
+    def bulk_update(self, objs, fields, batch_size=None):
+        if {"workshop", "workshop_id", "project", "project_id"} & set(fields):
+            raise ValidationError(
+                _("Change activity ownership through the model instance.")
+            )
+        return super().bulk_update(objs, fields, batch_size=batch_size)
+
+    def bulk_create(self, objs, **kwargs):
+        raise ValidationError(_("Create activities through the model instance."))
+
+
+class Activity(models.Model):
+    """A workshop activity, optionally associated with a project."""
+
+    objects = ActivityQuerySet.as_manager()
 
     class Outcome(models.TextChoices):
         SUCCESS = "success", _("Success")
@@ -713,54 +767,90 @@ class ProjectStep(models.Model):
         PARTIAL_SUCCESS = "partial_success", _("Partial success")
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
-    project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name="steps")
-    sequence = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    workshop = models.ForeignKey(
+        Workshop, on_delete=models.PROTECT, related_name="activities", blank=True
+    )
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.PROTECT,
+        related_name="activities",
+        null=True,
+        blank=True,
+    )
     name = models.CharField(max_length=100)
     blueprint = models.ForeignKey(
         Blueprint,
         null=True,
         blank=True,
         on_delete=models.PROTECT,
-        related_name="project_steps",
+        related_name="activities",
     )
     equipment = models.ForeignKey(
         Equipment,
         null=True,
         blank=True,
         on_delete=models.PROTECT,
-        related_name="project_steps",
+        related_name="activities",
     )
     reference = models.CharField(max_length=200, blank=True, unique=True)
-    source_reference = models.CharField(max_length=500, blank=True)
+    cost_amount = models.DecimalField(
+        max_digits=QUANTITY_MAX_DIGITS,
+        decimal_places=QUANTITY_DECIMAL_PLACES,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+    )
+    cost_currency = models.ForeignKey(
+        "Currency",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="activity_costs",
+    )
     outcome = models.CharField(max_length=20, choices=Outcome, blank=True)
-    occurred_at = models.DateTimeField()
+    occurred_at = models.DateTimeField(
+        null=True, blank=True, help_text=_("Use when the time is known.")
+    )
     recorded_at = models.DateTimeField(default=timezone.now, editable=False)
     notes = models.TextField(blank=True)
 
     class Meta:
-        verbose_name = _("Project step")
-        verbose_name_plural = _("Project steps")
-        db_table = "crafttally_project_step"
-        ordering = ("project", "sequence")
-        constraints = (
-            models.UniqueConstraint(
-                fields=["project", "sequence"], name="unique_project_step_sequence"
-            ),
-        )
+        verbose_name = _("Activity")
+        verbose_name_plural = _("Activities")
+        db_table = "crafttally_activity"
+        ordering = ("-recorded_at", "id")
 
     def __str__(self) -> str:
-        return f"{self.project} · {self.sequence}: {self.name}"
+        return f"{self.project or self.workshop}: {self.name}"
 
     def clean(self) -> None:
         super().clean()
         errors = {}
-        if self.blueprint_id and self.blueprint.workshop_id != self.project.workshop_id:
+        if self.project_id and not self.workshop_id:
+            self.workshop = self.project.workshop
+        if not self.workshop_id:
+            errors["workshop"] = _("Select a workshop for this activity.")
+        if self.project_id and self.workshop_id != self.project.workshop_id:
+            errors["project"] = _("The project must belong to the activity's workshop.")
+        if self.cost_amount is None and self.cost_currency_id:
+            errors["cost_amount"] = _("Enter an amount when selecting a currency.")
+        if self.cost_amount is not None and not self.cost_currency_id:
+            errors["cost_currency"] = _("Select the currency of the cost.")
+        if (
+            self.workshop_id
+            and self.blueprint_id
+            and self.blueprint.workshop_id != self.workshop_id
+        ):
             errors["blueprint"] = _(
-                "The blueprint must belong to the project's workshop."
+                "The blueprint must belong to the activity's workshop."
             )
-        if self.equipment_id and self.equipment.workshop_id != self.project.workshop_id:
+        if (
+            self.workshop_id
+            and self.equipment_id
+            and self.equipment.workshop_id != self.workshop_id
+        ):
             errors["equipment"] = _(
-                "The equipment must belong to the project's workshop."
+                "The equipment must belong to the activity's workshop."
             )
         if errors:
             raise ValidationError(errors)
@@ -772,12 +862,12 @@ class ProjectStep(models.Model):
         super().save(*args, **kwargs)
 
 
-class ProjectStepMeasurement(models.Model):
-    """A named measurement recorded during or after a project step."""
+class ActivityMeasurement(models.Model):
+    """A named measurement recorded during or after an activity."""
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
-    project_step = models.ForeignKey(
-        ProjectStep, on_delete=models.CASCADE, related_name="measurements"
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="measurements"
     )
     name = models.CharField(max_length=100)
     quantity = models.DecimalField(
@@ -786,20 +876,106 @@ class ProjectStepMeasurement(models.Model):
         validators=[MinValueValidator(Decimal("0"))],
     )
     unit = models.ForeignKey(
-        Unit, on_delete=models.PROTECT, related_name="project_step_measurements"
+        Unit, on_delete=models.PROTECT, related_name="activity_measurements"
     )
     notes = models.TextField(blank=True)
 
     class Meta:
-        verbose_name = _("Project step measurement")
-        verbose_name_plural = _("Project step measurements")
-        db_table = "crafttally_project_step_measurement"
-        ordering = ("project_step__sequence", "name")
+        verbose_name = _("Activity measurement")
+        verbose_name_plural = _("Activity measurements")
+        db_table = "crafttally_activity_measurement"
+        ordering = ("activity", "name")
         constraints = (
             models.UniqueConstraint(
-                fields=["project_step", "name"], name="unique_project_step_measurement"
+                fields=["activity", "name"], name="unique_activity_measurement"
             ),
         )
+
+
+class ActivityMaterial(models.Model):
+    """An observed input or yield, independent of inventory ledger movements."""
+
+    class Role(models.TextChoices):
+        INPUT = "input", _("Input")
+        OUTPUT = "output", _("Output")
+        WASTE = "waste", _("Waste")
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="materials"
+    )
+    material = models.ForeignKey(
+        Material, on_delete=models.PROTECT, related_name="step_observations"
+    )
+    role = models.CharField(max_length=16, choices=Role)
+    quantity = models.DecimalField(
+        max_digits=QUANTITY_MAX_DIGITS,
+        decimal_places=QUANTITY_DECIMAL_PLACES,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+    )
+    unit = models.ForeignKey(
+        Unit,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="step_material_observations",
+    )
+    inventory_line = models.ForeignKey(
+        "InventoryTransactionLine",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="material_observations",
+        help_text=_("Optional posted inventory line for this material and activity."),
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("Activity material")
+        verbose_name_plural = _("Activity materials")
+        ordering = ("role", "material__name")
+
+    def __str__(self) -> str:
+        return f"{self.activity}: {self.material} ({self.get_role_display()})"
+
+    def clean(self) -> None:
+        super().clean()
+        errors = {}
+        if (
+            self.activity_id
+            and self.material_id
+            and self.activity.workshop_id != self.material.workshop_id
+        ):
+            errors["material"] = _("The material must belong to the activity's workshop.")
+        if self.quantity is None and self.unit_id:
+            errors["quantity"] = _("Enter a quantity when selecting a unit.")
+        if self.quantity is not None and not self.unit_id:
+            errors["unit"] = _("Select the unit of the quantity.")
+        if self.inventory_line_id:
+            line = self.inventory_line
+            if not line.transaction.posted:
+                errors["inventory_line"] = _("Select a posted inventory line.")
+            elif (
+                line.material_id != self.material_id
+                or line.transaction.activity_id != self.activity_id
+            ):
+                errors["inventory_line"] = _(
+                    "The inventory line must match the material and activity."
+                )
+            elif (self.role == self.Role.OUTPUT and line.quantity < 0) or (
+                self.role in (self.Role.INPUT, self.Role.WASTE) and line.quantity > 0
+            ):
+                errors["inventory_line"] = _(
+                    "The inventory line direction must match the material role."
+                )
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class LedgerQuerySet(models.QuerySet):
@@ -844,8 +1020,8 @@ class InventoryTransaction(models.Model):
         on_delete=models.PROTECT,
         related_name="inventory_transactions",
     )
-    project_step = models.ForeignKey(
-        ProjectStep,
+    activity = models.ForeignKey(
+        Activity,
         null=True,
         blank=True,
         on_delete=models.PROTECT,
@@ -875,14 +1051,14 @@ class InventoryTransaction(models.Model):
             errors["project"] = _(
                 "The project must belong to the transaction's workshop."
             )
-        if self.project_step_id:
-            if self.project_step.project.workshop_id != self.workshop_id:
-                errors["project_step"] = _(
-                    "The project step must belong to the transaction's workshop."
+        if self.activity_id:
+            if self.activity.workshop_id != self.workshop_id:
+                errors["activity"] = _(
+                    "The activity must belong to the transaction's workshop."
                 )
-            if self.project_id and self.project_step.project_id != self.project_id:
-                errors["project_step"] = _(
-                    "The project step must belong to the selected project."
+            if self.project_id and self.activity.project_id != self.project_id:
+                errors["activity"] = _(
+                    "The activity must belong to the selected project."
                 )
         if errors:
             raise ValidationError(errors)

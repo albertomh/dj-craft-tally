@@ -10,6 +10,7 @@ from django.utils.translation import override
 
 import dj_craft_tally.admin as ct_admin
 from dj_craft_tally.models import (
+    Activity,
     Blueprint,
     BlueprintMaterialRequirement,
     Currency,
@@ -18,7 +19,6 @@ from dj_craft_tally.models import (
     Material,
     MaterialLot,
     Project,
-    ProjectStep,
 )
 
 
@@ -227,9 +227,8 @@ def test_admin_changelists_use_human_labels_and_unit_precision(
     stock.post()
     project = Project.objects.create(workshop=workshop, name="Kitchen tiles")
     project.set_status(Project.Status.ACTIVE)
-    step = ProjectStep.objects.create(
+    step = Activity.objects.create(
         project=project,
-        sequence=1,
         name="Press tiles",
         occurred_at="2026-01-02T00:00Z",
     )
@@ -238,7 +237,7 @@ def test_admin_changelists_use_human_labels_and_unit_precision(
         kind=InventoryTransaction.Kind.CONSUME,
         occurred_at="2026-01-02T12:30Z",
         project=project,
-        project_step=step,
+        activity=step,
         reference="Clay for first batch",
     )
     InventoryTransactionLine.objects.create(
@@ -264,7 +263,7 @@ def test_admin_changelists_use_human_labels_and_unit_precision(
     assert lot_response.status_code == HTTPStatus.OK
     assert b">2000.00 g</span>" in lot_response.content
 
-    step_response = client.get("/admin/crafttally/projectstep/")
+    step_response = client.get("/admin/crafttally/activity/")
     assert step_response.status_code == HTTPStatus.OK
     assert b"Kitchen tiles" in step_response.content
     assert b"Project object" not in step_response.content
@@ -279,7 +278,7 @@ def test_admin_changelists_use_human_labels_and_unit_precision(
     transaction_response = client.get("/admin/crafttally/inventorytransaction/")
     assert transaction_response.status_code == HTTPStatus.OK
     assert b"Kitchen tiles" in transaction_response.content
-    assert b"Kitchen tiles \xc2\xb7 1: Press tiles" in transaction_response.content
+    assert b"Kitchen tiles: Press tiles" in transaction_response.content
 
     line_response = client.get("/admin/crafttally/inventorytransactionline/")
     assert line_response.status_code == HTTPStatus.OK

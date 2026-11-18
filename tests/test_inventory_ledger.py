@@ -4,12 +4,12 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from dj_craft_tally.models import (
+    Activity,
     InventoryTransaction,
     InventoryTransactionLine,
     Material,
     MaterialLot,
     Project,
-    ProjectStep,
     Unit,
     Workshop,
 )
@@ -82,9 +82,8 @@ def test_transaction_rejects_foreign_projects_and_steps(workshop, material):
     other = Workshop.objects.create(name="Other")
     other_project = Project.objects.create(name="Other project", workshop=other)
     project = Project.objects.create(name="Project", workshop=workshop)
-    step = ProjectStep.objects.create(
+    step = Activity.objects.create(
         project=project,
-        sequence=1,
         name="Step",
         occurred_at="2026-01-01T12:00Z",
     )
@@ -94,20 +93,19 @@ def test_transaction_rejects_foreign_projects_and_steps(workshop, material):
             kind=InventoryTransaction.Kind.RECEIVE,
             occurred_at="2026-01-01T12:00Z",
             project=other_project,
-            project_step=step,
+            activity=step,
         ).full_clean()
-    foreign_step = ProjectStep.objects.create(
+    foreign_step = Activity.objects.create(
         project=other_project,
-        sequence=1,
         name="Foreign step",
         occurred_at="2026-01-01T12:00Z",
     )
-    with pytest.raises(ValidationError, match="project step must belong"):
+    with pytest.raises(ValidationError, match="activity must belong"):
         InventoryTransaction(
             workshop=workshop,
             kind=InventoryTransaction.Kind.RECEIVE,
             occurred_at="2026-01-01T12:00Z",
-            project_step=foreign_step,
+            activity=foreign_step,
         ).full_clean()
     with pytest.raises(ValidationError, match="Use post"):
         InventoryTransaction(

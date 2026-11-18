@@ -29,8 +29,8 @@ class CustomAdminSite(admin.AdminSite):
         "MaterialLot",
         "Blueprint",
         "Project",
-        "ProjectStep",
         "ProjectStatusChange",
+        "Activity",
         "InventoryTransaction",
         "InventoryTransactionLine",
     ]

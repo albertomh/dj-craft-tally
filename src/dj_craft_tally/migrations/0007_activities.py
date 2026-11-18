@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="ProjectStep",
+            name="Activity",
             fields=[
                 (
                     "id",
@@ -26,15 +26,8 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
-                (
-                    "sequence",
-                    models.PositiveIntegerField(
-                        validators=[django.core.validators.MinValueValidator(1)]
-                    ),
-                ),
                 ("name", models.CharField(max_length=100)),
                 ("reference", models.CharField(blank=True, max_length=200, unique=True)),
-                ("source_reference", models.CharField(blank=True, max_length=500)),
                 (
                     "outcome",
                     models.CharField(
@@ -61,7 +54,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
-                        related_name="project_steps",
+                        related_name="activities",
                         to="crafttally.blueprint",
                     ),
                 ),
@@ -71,28 +64,39 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
-                        related_name="project_steps",
+                        related_name="activities",
                         to="crafttally.equipment",
+                    ),
+                ),
+                (
+                    "workshop",
+                    models.ForeignKey(
+                        blank=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="activities",
+                        to="crafttally.workshop",
                     ),
                 ),
                 (
                     "project",
                     models.ForeignKey(
+                        blank=True,
+                        null=True,
                         on_delete=django.db.models.deletion.PROTECT,
-                        related_name="steps",
+                        related_name="activities",
                         to="crafttally.project",
                     ),
                 ),
             ],
             options={
-                "ordering": ("project", "sequence"),
-                "verbose_name": "Project step",
-                "verbose_name_plural": "Project steps",
-                "db_table": "crafttally_project_step",
+                "ordering": ("-recorded_at", "id"),
+                "verbose_name": "Activity",
+                "verbose_name_plural": "Activitys",
+                "db_table": "crafttally_activity",
             },
         ),
         migrations.CreateModel(
-            name="ProjectStepMeasurement",
+            name="ActivityMeasurement",
             fields=[
                 (
                     "id",
@@ -116,39 +120,33 @@ class Migration(migrations.Migration):
                 ),
                 ("notes", models.TextField(blank=True)),
                 (
-                    "project_step",
+                    "activity",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="measurements",
-                        to="crafttally.projectstep",
+                        to="crafttally.activity",
                     ),
                 ),
                 (
                     "unit",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
-                        related_name="project_step_measurements",
+                        related_name="activity_measurements",
                         to="crafttally.unit",
                     ),
                 ),
             ],
             options={
-                "ordering": ("project_step__sequence", "name"),
-                "verbose_name": "Project step measurement",
-                "verbose_name_plural": "Project step measurements",
-                "db_table": "crafttally_project_step_measurement",
+                "ordering": ("activity", "name"),
+                "verbose_name": "Activity measurement",
+                "verbose_name_plural": "Activity measurements",
+                "db_table": "crafttally_activity_measurement",
             },
         ),
         migrations.AddConstraint(
-            model_name="projectstep",
+            model_name="activitymeasurement",
             constraint=models.UniqueConstraint(
-                fields=("project", "sequence"), name="unique_project_step_sequence"
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="projectstepmeasurement",
-            constraint=models.UniqueConstraint(
-                fields=("project_step", "name"), name="unique_project_step_measurement"
+                fields=("activity", "name"), name="unique_activity_measurement"
             ),
         ),
     ]
