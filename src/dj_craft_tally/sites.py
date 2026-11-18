@@ -31,6 +31,8 @@ class CustomAdminSite(admin.AdminSite):
         "Project",
         "ProjectStatusChange",
         "Activity",
+        "Process",
+        "ProcessStep",
         "InventoryTransaction",
         "InventoryTransactionLine",
     ]

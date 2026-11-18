@@ -737,6 +737,54 @@ class ProjectStatusChange(models.Model):
         raise ValidationError(_("Project status history entries cannot be deleted."))
 
 
+class Process(models.Model):
+    """A reusable ordered recipe of operations for a workshop."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    workshop = models.ForeignKey(
+        Workshop, on_delete=models.PROTECT, related_name="processes"
+    )
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("name",)
+        verbose_name_plural = _("Processes")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["workshop", "name"], name="unique_workshop_process_name"
+            ),
+        )
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class ProcessStep(models.Model):
+    """A named, ordered instruction within a reusable process."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    process = models.ForeignKey(Process, on_delete=models.CASCADE, related_name="steps")
+    sequence = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    name = models.CharField(max_length=100)
+    instructions = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("process", "sequence")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["process", "sequence"], name="unique_process_step_sequence"
+            ),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.process} · {self.sequence}: {self.name}"
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
 class ActivityQuerySet(models.QuerySet):
     def update(self, **kwargs):
         if {"workshop", "workshop_id", "project", "project_id"} & kwargs.keys():
@@ -778,6 +826,14 @@ class Activity(models.Model):
         blank=True,
     )
     name = models.CharField(max_length=100)
+    process_step = models.ForeignKey(
+        ProcessStep,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="activities",
+        help_text=_("The process step this activity follows."),
+    )
     blueprint = models.ForeignKey(
         Blueprint,
         null=True,
@@ -832,6 +888,14 @@ class Activity(models.Model):
             errors["workshop"] = _("Select a workshop for this activity.")
         if self.project_id and self.workshop_id != self.project.workshop_id:
             errors["project"] = _("The project must belong to the activity's workshop.")
+        if (
+            self.workshop_id
+            and self.process_step_id
+            and self.process_step.process.workshop_id != self.workshop_id
+        ):
+            errors["process_step"] = _(
+                "The process must belong to the activity's workshop."
+            )
         if self.cost_amount is None and self.cost_currency_id:
             errors["cost_amount"] = _("Enter an amount when selecting a currency.")
         if self.cost_amount is not None and not self.cost_currency_id:

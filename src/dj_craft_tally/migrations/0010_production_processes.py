@@ -130,4 +130,89 @@ class Migration(migrations.Migration):
                 "ordering": ("role", "material__name"),
             },
         ),
+        migrations.CreateModel(
+            name="Process",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=dj_craft_tally.identifiers.uuid7,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=200)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "workshop",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="processes",
+                        to="crafttally.workshop",
+                    ),
+                ),
+            ],
+            options={
+                "verbose_name_plural": "Processes",
+                "ordering": ("name",),
+            },
+        ),
+        migrations.CreateModel(
+            name="ProcessStep",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=dj_craft_tally.identifiers.uuid7,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "sequence",
+                    models.PositiveIntegerField(
+                        validators=[django.core.validators.MinValueValidator(1)]
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("instructions", models.TextField(blank=True)),
+                (
+                    "process",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="steps",
+                        to="crafttally.process",
+                    ),
+                ),
+            ],
+            options={
+                "ordering": ("process", "sequence"),
+            },
+        ),
+        migrations.AddField(
+            model_name="activity",
+            name="process_step",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="The process step this activity follows.",
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="activities",
+                to="crafttally.processstep",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="process",
+            constraint=models.UniqueConstraint(
+                fields=("workshop", "name"), name="unique_workshop_process_name"
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="processstep",
+            constraint=models.UniqueConstraint(
+                fields=("process", "sequence"), name="unique_process_step_sequence"
+            ),
+        ),
     ]

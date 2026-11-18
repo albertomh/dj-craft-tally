@@ -22,6 +22,8 @@ from dj_craft_tally.models import (
     InventoryTransactionLine,
     Material,
     MaterialLot,
+    Process,
+    ProcessStep,
     Project,
     ProjectStatusChange,
     Unit,
@@ -314,6 +316,29 @@ class EquipmentAdmin(admin.ModelAdmin):
     )
     list_filter: ClassVar = ("workshop", "kind")
     search_fields: ClassVar = ("name", "technology", "manufacturer", "model")
+    formfield_overrides: ClassVar = _textarea_overrides(
+        rows=5, min_width=_WIDE_TEXTAREA_MIN_WIDTH
+    )
+
+
+class ProcessStepInline(admin.TabularInline):
+    model = ProcessStep
+    extra = 0
+
+
+@admin.register(Process)
+class ProcessAdmin(admin.ModelAdmin):
+    inlines: ClassVar = (ProcessStepInline,)
+    list_display: ClassVar = ("name", "workshop")
+    list_filter: ClassVar = ("workshop",)
+    search_fields: ClassVar = ("name", "description")
+
+
+@admin.register(ProcessStep)
+class ProcessStepAdmin(admin.ModelAdmin):
+    list_display: ClassVar = ("name", "process", "sequence")
+    list_filter: ClassVar = ("process__workshop", "process")
+    search_fields: ClassVar = ("name", "process__name")
     formfield_overrides: ClassVar = _textarea_overrides(
         rows=5, min_width=_WIDE_TEXTAREA_MIN_WIDTH
     )
