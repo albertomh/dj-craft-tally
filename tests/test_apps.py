@@ -3,7 +3,16 @@ from django.contrib.auth import get_user_model
 from django.test import RequestFactory, override_settings
 
 from dj_craft_tally.admin_apps import CustomAdminConfig
-from dj_craft_tally.models import InventoryTransactionLine, Material, Unit
+from dj_craft_tally.models import (
+    Activity,
+    InventoryTransactionLine,
+    Material,
+    Process,
+    ProcessStep,
+    Project,
+    ProjectStatusChange,
+    Unit,
+)
 from dj_craft_tally.sites import CustomAdminSite
 
 
@@ -17,6 +26,14 @@ def test_custom_admin_site_orders_registered_models(db):
     site = CustomAdminSite()
     site.register(InventoryTransactionLine)
     site.register(Material)
+    for model in (
+        ProcessStep,
+        Activity,
+        ProjectStatusChange,
+        Process,
+        Project,
+    ):
+        site.register(model)
     request = RequestFactory().get("/")
     request.user = get_user_model().objects.create_superuser(
         username="admin", password="test"
@@ -27,5 +44,10 @@ def test_custom_admin_site_orders_registered_models(db):
     craft_tally_app = next(app for app in app_list if app["app_label"] == "crafttally")
     assert [model["object_name"] for model in craft_tally_app["models"]] == [
         "Material",
+        "Project",
+        "ProjectStatusChange",
+        "Activity",
+        "Process",
+        "ProcessStep",
         "InventoryTransactionLine",
     ]

@@ -1,0 +1,12 @@
+.app-list .app-crafttally .model-workshopmembership th,
+.app-list .app-crafttally .model-materiallot th,
+.app-list .app-crafttally .model-projectstatuschange th,
+.app-list .app-crafttally .model-processstep th,
+.app-list .app-crafttally .model-inventorytransactionline th,
+#nav-sidebar .app-crafttally .model-workshopmembership th,
+#nav-sidebar .app-crafttally .model-materiallot th,
+#nav-sidebar .app-crafttally .model-projectstatuschange th,
+#nav-sidebar .app-crafttally .model-processstep th,
+#nav-sidebar .app-crafttally .model-inventorytransactionline th {
+    padding-inline-start: 32px;
+}

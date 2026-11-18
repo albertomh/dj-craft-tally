@@ -3,6 +3,7 @@
 
 {% block extrastyle %}
   {{ block.super }}
+  <link rel="stylesheet" href="{% static 'dj_craft_tally/css/admin_sidebar.css' %}">
   {% if app_label == "crafttally" or opts.app_label == "crafttally" or not app_label and not opts %}
     <link rel="stylesheet" href="{% static 'dj_craft_tally/css/craft_tally_admin.css' %}">
   {% endif %}
