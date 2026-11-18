@@ -41,34 +41,18 @@
 
   <div class="ct-section">
     <h2>{% translate "Material costs" %}</h2>
-    {% if has_expenditure %}
     <div class="ct-cards">
       {% for period in expenditure_periods %}
       <div class="ct-card ct-expenditure-card">
-        <span class="ct-count">
-          {% if period.entries|length == 1 %}
-          {{ period.entries.0.amount }}
-          {% else %}
-          {{ period.entries|length }} {% translate "currencies" %}
-          {% endif %}
-        </span>
+        {% for entry in period.entries %}
+        <span class="ct-count">{{ entry.amount }}</span>
+        {% empty %}
+        <span class="ct-count">&mdash;</span>
+        {% endfor %}
         <span class="ct-label">{{ period.label }}</span>
-        {% if period.entries|length > 1 %}
-        <ul>
-          {% for entry in period.entries %}
-          <li>
-            <span class="ct-mono">{{ entry.code }}</span>
-            <span>{{ entry.amount }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-        {% endif %}
       </div>
       {% endfor %}
     </div>
-    {% else %}
-    <p class="ct-empty">{% translate "No purchases recorded yet." %}</p>
-    {% endif %}
   </div>
 
   <div class="ct-section">
@@ -93,8 +77,12 @@
           </td>
           <td class="ct-right">
             {% if blueprint.cost %}
-            {% for entry in blueprint.cost %}<span class="ct-mono">{{ entry.amount|safe }}</span>{% if not forloop.last %}<br>{% endif %}{% endfor %}
-            {% else %}&mdash;{% endif %}
+            {% for entry in blueprint.cost %}
+            <span class="ct-mono">{{ entry.amount|safe }}</span>{% if not forloop.last%}<br>{% endif %}
+            {% endfor %}
+            {% else %}
+            &mdash;
+            {% endif %}
           </td>
           <td class="ct-right ct-mono">
             {% if blueprint.last_made %}{{ blueprint.last_made|date:"Y-m-d" }}{% else %}&mdash;{% endif %}

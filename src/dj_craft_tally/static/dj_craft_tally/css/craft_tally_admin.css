@@ -1,8 +1,3 @@
-.ct-mono {
-    font-family: monospace;
-    font-size: 0.7rem;
-}
-
 #result_list td.field-display_output_quantity,
 #result_list td.field-display_cost_per_output_unit,
 #result_list td.field-available_runs,
@@ -14,11 +9,16 @@ body.model-workshop.change-list #result_list td.field-created_at,
 body.model-workshop.change-list #result_list th.column-created_at,
 body.model-workshopmembership.change-list #result_list td.field-created_at,
 body.model-workshopmembership.change-list #result_list th.column-created_at,
-body.model-projectstep.change-list #result_list td.field-occurred_at,
-body.model-projectstep.change-list #result_list th.column-occurred_at {
+body.model-activity.change-list #result_list td.field-occurred_at,
+body.model-activity.change-list #result_list th.column-occurred_at {
     font-family: monospace;
     font-size: 0.7rem;
     text-align: right !important;
+}
+
+.ct-mono {
+    font-family: monospace;
+    font-size: 0.7rem;
 }
 
 .ct-dashboard {
@@ -153,22 +153,8 @@ a.ct-card:hover {
     }
 }
 
-.ct-expenditure-card ul {
-    list-style: none;
-    margin: 10px 0 0;
-    padding: 0;
-}
-
-.ct-expenditure-card li {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    font-size: 0.85rem;
-    padding: 2px 0;
-}
-
-.ct-expenditure-card li .ct-mono {
-    font-size: 0.85rem;
+.ct-expenditure-card .ct-currency {
+    font-size: 0.65em;
 }
 
 .ct-section {
