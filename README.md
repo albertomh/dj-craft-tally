@@ -74,6 +74,24 @@
 - Record an optional purchase amount and currency for each material delivery.
 - i18n ready, with translation packs for Spanish & French.
 
+## How it fits together
+
+The models describe **the work you're doing**, **a reusable description of how to
+do it**, and **records of what happened**:
+
+- A **Project** is the work you're doing, such as 3D-printing a dice tower. Its current
+  status shows how it's going; **project status changes** keep a history of that
+  progress.
+- A **Process** is a reusable description of how to work, made up of ordered
+  **process steps**. A resin-printing process might say Print, then Wash, then Cure.
+- An **Activity** records work, including details such as when it happened, the
+  outcome and materials used. It can be linked to a project or a process step.
+  Activities can also stand alone: cleaning a vat or changing the FEP doesn't
+  need a project.
+
+A process describes a way to work; activities record the work itself. You can
+reuse the same process across projects and record activities without following one.
+
 See the [documentation](https://albertomh.github.io/dj-craft-tally/) for an admin
 walkthrough.
 

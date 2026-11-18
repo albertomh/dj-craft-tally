@@ -90,7 +90,7 @@ with permission to manage the app's models.
    reconcile one, post a reversing unallocated movement and a corresponding movement
    against the appropriate lot. The original entries remain in the audit trail.
 5. Create a **Project**, optionally linked to a blueprint in the same workshop.
-   Record work as ordered **Project steps**, with optional equipment and
+   Record work as **Activities**, with optional equipment and
    measurements. Change the project status as work progresses; status changes
    appear in its history.
 
@@ -114,3 +114,33 @@ Build the static site with:
 ```sh
 uv run zensical build --clean
 ```
+
+## Recording production processes
+
+A **Process** is a reusable sequence of named **Process steps** for a workshop.
+For example, resin printing can define Print, Wash and Cure; woodworking could
+define Cut, Dry and Varnish. Record activities as work occurs and optionally link
+each to a project and a process step. The activity's own name remains
+an independent record, so editing a process does not rewrite past activities.
+Process steps are descriptions, not an automatic scheduler or a requirement to
+perform every step.
+
+Activities can also stand alone without a project, for maintenance, cleaning, or other
+ad-hoc work. Select a workshop and optionally equipment. An activity may have a date and
+time or no known timestamp. Use notes for a date without a known time or an incomplete
+date, such as a month. Each activity belongs to a workshop; when linked to a project, it
+must belong to the same workshop. The workshop is inferred from the project if omitted.
+Save activities individually to validate their ownership; bulk creation and bulk updates
+of ownership are not supported. A project with activities cannot be moved to another
+workshop through its model instance. Direct SQL and other validation-bypassing writes
+must preserve these invariants.
+
+Record observed inputs, outputs (yield), or waste as activity materials. The material is
+identified even when its quantity is unknown; when a quantity is known, choose its unit
+explicitly. Use named step measurements for other values, such as estimated and actual
+duration, or the portion of resin used for supports. Record an optional cost with its
+currency, and use notes for files or other instructions. These observations do not
+change stock: record and post explicit inventory transactions for stock movements. An
+observation can optionally reference a posted inventory line for the same step and
+material, with the appropriate movement direction. The link identifies a related
+movement; observed and stock quantities may differ and are not automatically reconciled.
