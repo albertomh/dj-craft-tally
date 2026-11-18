@@ -111,6 +111,48 @@ def test_material_lot_admin_places_currency_before_amount_and_hides_help_text():
 
 
 @pytest.mark.django_db
+@override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"])
+def test_activity_admin_groups_currency_and_amount(client, workshop):
+    user = get_user_model().objects.create_superuser(username="admin", password="test")
+    activity = Activity.objects.create(workshop=workshop, name="Print")
+    client.force_login(user)
+
+    for url in (
+        "/admin/crafttally/activity/add/",
+        f"/admin/crafttally/activity/{activity.pk}/change/",
+    ):
+        response = client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        rows = [
+            [field.field.name for field in line]
+            for fieldset in response.context["adminform"]
+            for line in fieldset
+        ]
+        assert ["cost_currency", "cost_amount"] in rows
+        assert b'id="id_cost_currency"' in response.content
+        assert b'id="id_cost_amount"' in response.content
+
+
+@pytest.mark.django_db
+@override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"])
+def test_datetime_inputs_use_the_shared_admin_layout(client):
+    user = get_user_model().objects.create_superuser(username="admin", password="test")
+    client.force_login(user)
+
+    for model, field in (
+        ("activity", "occurred_at"),
+        ("inventorytransaction", "occurred_at"),
+        ("materiallot", "received_at"),
+        ("project", "completed_at"),
+    ):
+        response = client.get(f"/admin/crafttally/{model}/add/")
+        assert response.status_code == HTTPStatus.OK
+        assert b"dj_craft_tally/css/datetime_layout.css" in response.content
+        assert f'id="id_{field}_0"'.encode() in response.content
+        assert f'id="id_{field}_1"'.encode() in response.content
+
+
+@pytest.mark.django_db
 def test_format_money_normalizes_negative_zero_and_supports_suffix_currency():
     euro = Currency.objects.get(code="EUR")
 

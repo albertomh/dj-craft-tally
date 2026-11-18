@@ -34,6 +34,11 @@ from dj_craft_tally.models import (
 _WIDE_TEXTAREA_MIN_WIDTH = 500
 
 
+class DateTimeLayoutAdmin(admin.ModelAdmin):
+    class Media:
+        css: ClassVar = {"all": ("dj_craft_tally/css/datetime_layout.css",)}
+
+
 @admin.register(Currency)
 class CurrencyAdmin(admin.ModelAdmin):
     list_display: ClassVar = ("code", "name", "symbol", "symbol_position")
@@ -238,7 +243,7 @@ class MaterialAdmin(admin.ModelAdmin):
 
 
 @admin.register(MaterialLot)
-class MaterialLotAdmin(admin.ModelAdmin):
+class MaterialLotAdmin(DateTimeLayoutAdmin):
     fieldsets: ClassVar = (
         (
             None,
@@ -365,7 +370,7 @@ class ProjectStatusChangeInline(admin.TabularInline):
 
 
 @admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
+class ProjectAdmin(DateTimeLayoutAdmin):
     inlines: ClassVar = (ProjectStatusChangeInline,)
     list_display: ClassVar = ("name", "workshop", "blueprint", "status", "completed_at")
     list_filter: ClassVar = ("workshop", "status")
@@ -429,7 +434,20 @@ class ActivityMaterialInline(admin.TabularInline):
 
 
 @admin.register(Activity)
-class ActivityAdmin(admin.ModelAdmin):
+class ActivityAdmin(DateTimeLayoutAdmin):
+    fields: ClassVar = (
+        "workshop",
+        "project",
+        "name",
+        "process_step",
+        "blueprint",
+        "equipment",
+        "reference",
+        ("cost_currency", "cost_amount"),
+        "outcome",
+        "occurred_at",
+        "notes",
+    )
     inlines: ClassVar = (
         ActivityMaterialInline,
         ActivityMeasurementInline,
@@ -469,7 +487,7 @@ class InventoryTransactionLineInline(admin.TabularInline):
 
 
 @admin.register(InventoryTransaction)
-class InventoryTransactionAdmin(admin.ModelAdmin):
+class InventoryTransactionAdmin(DateTimeLayoutAdmin):
     actions: ClassVar = ("post_transactions",)
     inlines: ClassVar = (InventoryTransactionLineInline,)
     readonly_fields: ClassVar = ("posted",)
