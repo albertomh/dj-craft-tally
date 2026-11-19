@@ -826,13 +826,13 @@ class Activity(models.Model):
         related_name="activities",
     )
     reference = models.CharField(max_length=200, blank=True, unique=True)
-    cost = models.ForeignKey(
+    transaction = models.ForeignKey(
         "CurrencyTransaction",
         null=True,
         blank=True,
         on_delete=models.PROTECT,
         related_name="activities",
-        help_text=_("The cost associated with this activity."),
+        help_text=_("The currency transaction associated with this activity."),
     )
     outcome = models.CharField(max_length=20, choices=Outcome, blank=True)
     occurred_at = models.DateTimeField(
