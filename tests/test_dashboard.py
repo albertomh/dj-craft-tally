@@ -15,12 +15,12 @@ from dj_craft_tally.models import (
     InventoryTransaction,
     InventoryTransactionLine,
     Material,
-    MaterialLot,
     Project,
     Unit,
     Workshop,
 )
 from dj_craft_tally.sites import CustomAdminSite
+from tests.conftest import create_priced_lot
 
 
 @pytest.fixture
@@ -74,7 +74,7 @@ def test_dashboard_context_reports_summary_metrics(dashboard_site, dashboard_req
     BlueprintMaterialRequirement.objects.create(
         blueprint=blueprint, material=material, quantity=required_quantity
     )
-    lot = MaterialLot.objects.create(
+    lot = create_priced_lot(
         material=material,
         quantity_per_package=required_quantity,
         purchase_amount=Decimal("12.50"),
@@ -121,7 +121,7 @@ def test_dashboard_context_reports_summary_metrics(dashboard_site, dashboard_req
 def test_dashboard_context_formats_expenditure_periods(
     dashboard_site, dashboard_request, material
 ):
-    MaterialLot.objects.create(
+    create_priced_lot(
         material=material,
         quantity_per_package=1,
         received_at="2026-04-01T00:00Z",

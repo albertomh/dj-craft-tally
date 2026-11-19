@@ -84,8 +84,8 @@ def test_demo_seed_creates_repeatable_sample_data(tmp_path):
         )
         assert (
             connection.execute(
-                "select count(*) from crafttally_material_lot "
-                "where purchase_amount is not null and purchase_currency_id is not null"
+                "select count(*) from crafttally_currencytransaction "
+                "where material_lot_id is not null"
             ).fetchone()[0]
             > 0
         )

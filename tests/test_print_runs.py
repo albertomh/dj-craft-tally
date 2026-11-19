@@ -77,10 +77,6 @@ def test_observations_and_processes_validate_workshop_and_quantities():
     with pytest.raises(ValidationError, match="process"):
         step.save()
     step.process_step = None
-    step.cost_amount = Decimal("1")
-    with pytest.raises(ValidationError, match="currency"):
-        step.save()
-    step.cost_amount = None
     step.save()
     material = Material.objects.create(
         workshop=other, name="Glass", unit=Unit.objects.get(code="g")
@@ -197,12 +193,7 @@ def test_activity_rejects_missing_or_mismatched_workshop():
 def test_activity_cost_and_material_unit_require_corresponding_amounts(
     workshop, material
 ):
-    activity = Activity(workshop=workshop, name="Shape", cost_currency_id="GBP")
-    with pytest.raises(ValidationError) as exc:
-        activity.save()
-    assert "cost_amount" in exc.value.message_dict
-    activity.cost_currency_id = None
-    activity.save()
+    activity = Activity.objects.create(workshop=workshop, name="Shape")
     observation = ActivityMaterial(
         activity=activity,
         material=material,
