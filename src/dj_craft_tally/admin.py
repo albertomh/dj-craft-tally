@@ -333,8 +333,23 @@ class MaterialLotAdmin(DateTimeLayoutAdmin):
         return super().get_readonly_fields(request, obj)
 
 
+class EquipmentTransactionInline(admin.TabularInline):
+    model = CurrencyTransaction
+    fields: ClassVar = (
+        "created_at",
+        "description",
+        "amount",
+        "currency",
+        "workshop",
+        "merchant",
+    )
+    extra = 0
+    show_change_link = True
+
+
 @admin.register(Equipment)
 class EquipmentAdmin(admin.ModelAdmin):
+    inlines: ClassVar = (EquipmentTransactionInline,)
     list_display: ClassVar = (
         "name",
         "workshop",
