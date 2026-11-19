@@ -12,6 +12,15 @@ on:
   workflow_call:
 
 jobs:
+  translations:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check gettext catalogs
+        run: msgfmt --check --check-format src/dj_craft_tally/locale/*/LC_MESSAGES/django.po
+
   lockfile:
     runs-on: ubuntu-slim
     env:
