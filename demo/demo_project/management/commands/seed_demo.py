@@ -17,6 +17,7 @@ from dj_craft_tally.models import (
     Blueprint,
     BlueprintMaterialRequirement,
     Currency,
+    CurrencyTransaction,
     Equipment,
     InventoryTransaction,
     InventoryTransactionLine,
@@ -124,7 +125,21 @@ class Command(BaseCommand):
             kind="sewing_machine",
             technology="mechanical",
         )
-        pla_lot = MaterialLot.objects.create(
+
+        def create_lot(*, purchase_amount, purchase_currency_id, **kwargs):
+            lot = MaterialLot.objects.create(**kwargs)
+            CurrencyTransaction.objects.create(
+                workshop=lot.material.workshop,
+                material_lot=lot,
+                description=f"Purchase: {lot.reference}",
+                amount=-purchase_amount,
+                currency_id=purchase_currency_id,
+                created_at=lot.received_at,
+                merchant=lot.supplier,
+            )
+            return lot
+
+        pla_lot = create_lot(
             material=pla,
             reference="PLA-BLUE-01",
             supplier="Example Filament Co.",
@@ -134,7 +149,7 @@ class Command(BaseCommand):
             purchase_amount=Decimal("48.00"),
             purchase_currency_id=gbp.code,
         )
-        bolt_lot = MaterialLot.objects.create(
+        bolt_lot = create_lot(
             material=bolts,
             reference="M3-01",
             supplier="Example Hardware",
@@ -144,7 +159,7 @@ class Command(BaseCommand):
             purchase_amount=Decimal("18.50"),
             purchase_currency_id=gbp.code,
         )
-        plywood_lot = MaterialLot.objects.create(
+        plywood_lot = create_lot(
             material=plywood,
             reference="PLY-BIRCH-01",
             supplier="Example Timber",
@@ -154,7 +169,7 @@ class Command(BaseCommand):
             purchase_amount=Decimal("72.00"),
             purchase_currency_id="GBP",
         )
-        vinyl_lot = MaterialLot.objects.create(
+        vinyl_lot = create_lot(
             material=vinyl,
             reference="VINYL-01",
             supplier="Example Signs Supply",
@@ -164,7 +179,7 @@ class Command(BaseCommand):
             purchase_amount=Decimal("24.00"),
             purchase_currency_id="GBP",
         )
-        fabric_lot = MaterialLot.objects.create(
+        fabric_lot = create_lot(
             material=fabric,
             reference="CANVAS-01",
             supplier="Example Textiles",
@@ -175,7 +190,7 @@ class Command(BaseCommand):
             purchase_currency_id="GBP",
         )
 
-        MaterialLot.objects.create(
+        create_lot(
             material=pla,
             reference="PLA-BLUE-YEAR-START",
             supplier="Example Filament Co.",
@@ -185,7 +200,7 @@ class Command(BaseCommand):
             purchase_amount=Decimal("22.00"),
             purchase_currency_id="GBP",
         )
-        MaterialLot.objects.create(
+        create_lot(
             material=bolts,
             reference="M3-CURRENT-QUARTER",
             supplier="Example Hardware",
@@ -195,7 +210,7 @@ class Command(BaseCommand):
             purchase_amount=Decimal("19.00"),
             purchase_currency_id="GBP",
         )
-        MaterialLot.objects.create(
+        create_lot(
             material=vinyl,
             reference="VINYL-LAST-WEEK",
             supplier="Example Signs Supply",

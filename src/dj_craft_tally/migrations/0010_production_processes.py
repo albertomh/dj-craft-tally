@@ -9,7 +9,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("crafttally", "0009_material_lot_purchase_costs"),
+        ("crafttally", "0009_currency_and_transaction"),
     ]
 
     operations = [
@@ -20,28 +20,6 @@ class Migration(migrations.Migration):
                 "verbose_name": "Activity",
                 "verbose_name_plural": "Activities",
             },
-        ),
-        migrations.AddField(
-            model_name="activity",
-            name="cost_amount",
-            field=models.DecimalField(
-                blank=True,
-                decimal_places=6,
-                max_digits=15,
-                null=True,
-                validators=[django.core.validators.MinValueValidator(Decimal("0"))],
-            ),
-        ),
-        migrations.AddField(
-            model_name="activity",
-            name="cost_currency",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.PROTECT,
-                related_name="activity_costs",
-                to="crafttally.currency",
-            ),
         ),
         migrations.AlterField(
             model_name="activity",

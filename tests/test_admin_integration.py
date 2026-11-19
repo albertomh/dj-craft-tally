@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 from django.contrib import admin
+from django.contrib.admin import AdminSite
 from django.contrib.auth import get_user_model
 from django.test import RequestFactory, override_settings
 from django.utils.translation import override
@@ -14,12 +15,14 @@ from dj_craft_tally.models import (
     Blueprint,
     BlueprintMaterialRequirement,
     Currency,
+    CurrencyTransaction,
     InventoryTransaction,
     InventoryTransactionLine,
     Material,
     MaterialLot,
     Project,
 )
+from tests.conftest import create_priced_lot
 
 
 @pytest.mark.django_db
@@ -59,7 +62,7 @@ def test_project_status_change_admin_renders_missing_project_as_dash():
 
 @pytest.mark.django_db
 def test_material_lot_admin_displays_purchase_amount(material: Material):
-    lot = MaterialLot.objects.create(
+    lot = create_priced_lot(
         material=material,
         quantity_per_package=1,
         purchase_amount=Decimal("1.25"),
@@ -79,7 +82,7 @@ def test_blueprint_admin_displays_cost_per_output_unit(blueprint, material):
     BlueprintMaterialRequirement.objects.create(
         blueprint=blueprint, material=material, quantity=Decimal("2")
     )
-    MaterialLot.objects.create(
+    create_priced_lot(
         material=material,
         quantity_per_package=2,
         purchase_amount=Decimal("12.50"),
@@ -93,21 +96,6 @@ def test_blueprint_admin_displays_cost_per_output_unit(blueprint, material):
         str(blueprint_admin.display_cost_per_output_unit(blueprint))
         == '<span class="ct-mono">£12.50</span>'
     )
-
-
-def test_material_lot_admin_places_currency_before_amount_and_hides_help_text():
-    lot_admin = admin.site._registry[MaterialLot]
-    request = RequestFactory().get("/")
-    request.user = SimpleNamespace(has_perm=lambda permission: True)
-
-    form = lot_admin.get_form(request)
-
-    fields = lot_admin.fieldsets[0][1]["fields"]
-    assert ("purchase_currency", "purchase_amount") in fields
-    assert form.base_fields["purchase_currency"].help_text == ""
-    assert form.base_fields["purchase_amount"].help_text == ""
-    assert form.base_fields["purchase_currency"].widget.can_add_related is False
-    assert form.base_fields["purchase_currency"].widget.can_view_related is False
 
 
 @pytest.mark.django_db
@@ -128,9 +116,8 @@ def test_activity_admin_groups_currency_and_amount(client, workshop):
             for fieldset in response.context["adminform"]
             for line in fieldset
         ]
-        assert ["cost_currency", "cost_amount"] in rows
-        assert b'id="id_cost_currency"' in response.content
-        assert b'id="id_cost_amount"' in response.content
+        assert ["cost"] in rows
+        assert b'id="id_cost"' in response.content
 
 
 @pytest.mark.django_db
@@ -153,10 +140,59 @@ def test_datetime_inputs_use_the_shared_admin_layout(client):
 
 
 @pytest.mark.django_db
+@override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"])
+def test_expense_admin_groups_currency_and_amount(client, workshop):
+    user = get_user_model().objects.create_superuser(username="admin", password="test")
+    transaction = CurrencyTransaction.objects.create(
+        workshop=workshop,
+        created_at="2026-11-01T00:00Z",
+        description="Resin",
+        amount=Decimal("12.50"),
+        currency_id="GBP",
+    )
+    client.force_login(user)
+
+    for url in (
+        "/admin/crafttally/currencytransaction/add/",
+        f"/admin/crafttally/currencytransaction/{transaction.pk}/change/",
+    ):
+        response = client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        rows = [
+            [field.field.name for field in line]
+            for fieldset in response.context["adminform"]
+            for line in fieldset
+        ]
+        assert ["currency", "amount"] in rows
+        assert response.context["adminform"].form.fields["url"].clean("example.com") == (
+            "https://example.com"
+        )
+        assert b'id="id_currency"' in response.content
+        assert b'id="id_amount"' in response.content
+
+
+@pytest.mark.django_db
 def test_format_money_normalizes_negative_zero_and_supports_suffix_currency():
     euro = Currency.objects.get(code="EUR")
+    usd = Currency.objects.get(code="USD")
 
     assert str(ct_admin.format_money(Decimal("-0.001"), euro)) == "0.00 €"
+    assert str(ct_admin.format_money(Decimal("-12.50"), euro)) == "-12.50 €"
+    assert str(ct_admin.format_money(Decimal("-12.50"), usd)) == "-$12.50"
+
+
+@pytest.mark.django_db
+def test_display_amount(rf):
+    usd = Currency.objects.get(code="USD")
+    model_admin = ct_admin.CurrencyTransactionAdmin(CurrencyTransaction, AdminSite())
+
+    valid_tx = CurrencyTransaction(amount=Decimal("-12.50"), currency=usd)
+    assert str(model_admin.display_amount(valid_tx)) == (
+        '<span class="ct-mono ct-right">-$12.50</span>'
+    )
+
+    missing_amount_tx = CurrencyTransaction(amount=None, currency=usd)
+    assert model_admin.display_amount(missing_amount_tx) == "-"
 
 
 @pytest.mark.django_db
@@ -252,7 +288,7 @@ def test_admin_changelists_use_human_labels_and_unit_precision(
     filament = Material.objects.create(
         workshop=workshop, name="Blue PLA filament", unit=gram
     )
-    MaterialLot.objects.create(
+    create_priced_lot(
         material=filament, reference="PLA-BLUE-01", quantity_per_package=2000
     )
     BlueprintMaterialRequirement.objects.create(
@@ -328,3 +364,24 @@ def test_admin_changelists_use_human_labels_and_unit_precision(
     assert b">-2</span>" in line_response.content
     assert b">-2.000000</span>" not in line_response.content
     assert b">-125.00 g</span>" in line_response.content
+
+
+@pytest.mark.django_db
+def test_material_change_page_shows_its_lots(client, django_user_model, material):
+    user = django_user_model.objects.create_superuser(
+        username="lots-admin", password="pw"
+    )
+    client.force_login(user)
+    lot = create_priced_lot(
+        material=material,
+        reference="VISIBLE-LOT",
+        quantity_per_package=10,
+        purchase_amount=Decimal("12.50"),
+        purchase_currency_id="GBP",
+    )
+    with override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"]):
+        response = client.get(f"/admin/crafttally/material/{material.pk}/change/")
+    assert response.status_code == HTTPStatus.OK
+    assert b"VISIBLE-LOT" in response.content
+    assert str(lot.pk).encode() in response.content
+    assert b"12.50" in response.content

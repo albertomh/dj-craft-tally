@@ -213,22 +213,6 @@ class MaterialLot(models.Model):
         validators=[MinValueValidator(Decimal("0.000001"))],
     )
     received_at = models.DateTimeField(null=True, blank=True)
-    purchase_amount = models.DecimalField(
-        null=True,
-        blank=True,
-        max_digits=QUANTITY_MAX_DIGITS,
-        decimal_places=MONEY_DECIMAL_PLACES,
-        validators=[MinValueValidator(Decimal("0"))],
-        help_text=_("Amount paid for this delivery."),
-    )
-    purchase_currency = models.ForeignKey(
-        "Currency",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        related_name="purchased_lots",
-        help_text=_("Currency of the amount paid for this delivery."),
-    )
     notes = models.TextField(blank=True)
 
     class Meta:
@@ -251,14 +235,6 @@ class MaterialLot(models.Model):
         errors = {}
         if self.package_count is not None and self.package_count < 1:
             errors["package_count"] = _("Enter at least one package.")
-        if self.purchase_amount is None and self.purchase_currency_id:
-            errors["purchase_amount"] = _(
-                "Enter the amount paid when selecting a purchase currency."
-            )
-        if self.purchase_amount is not None and not self.purchase_currency_id:
-            errors["purchase_currency"] = _(
-                "Select the currency of the amount paid for this delivery."
-            )
         if errors:
             raise ValidationError(errors)
 
@@ -418,10 +394,8 @@ class Blueprint(models.Model):
             return CostBreakdown({}, ())
 
         priced_lots = (
-            MaterialLot.objects.filter(
-                purchase_amount__isnull=False,
-                purchase_currency__isnull=False,
-            )
+            MaterialLot.objects.filter(models.Q(transaction__amount__lte=0))
+            .select_related("transaction")
             .annotate(
                 remaining_stock=models.Sum(
                     "inventory_lines__quantity",
@@ -450,12 +424,15 @@ class Blueprint(models.Model):
                 if not available:
                     continue
                 quantity = min(remaining, available)
+                transaction = lot.transaction
+                currency = transaction.currency_id
+                amount = -transaction.amount
                 usages.append(
                     LotUsage(
                         lot=lot,
                         quantity=quantity,
-                        currency=lot.purchase_currency_id,
-                        cost=lot.purchase_amount * quantity / lot.total_quantity,
+                        currency=currency,
+                        cost=amount * quantity / lot.total_quantity,
                     )
                 )
                 remaining -= quantity
@@ -849,19 +826,13 @@ class Activity(models.Model):
         related_name="activities",
     )
     reference = models.CharField(max_length=200, blank=True, unique=True)
-    cost_amount = models.DecimalField(
-        max_digits=QUANTITY_MAX_DIGITS,
-        decimal_places=QUANTITY_DECIMAL_PLACES,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(Decimal("0"))],
-    )
-    cost_currency = models.ForeignKey(
-        "Currency",
+    cost = models.ForeignKey(
+        "CurrencyTransaction",
         null=True,
         blank=True,
         on_delete=models.PROTECT,
-        related_name="activity_costs",
+        related_name="activities",
+        help_text=_("The cost associated with this activity."),
     )
     outcome = models.CharField(max_length=20, choices=Outcome, blank=True)
     occurred_at = models.DateTimeField(
@@ -896,10 +867,6 @@ class Activity(models.Model):
             errors["process_step"] = _(
                 "The process must belong to the activity's workshop."
             )
-        if self.cost_amount is None and self.cost_currency_id:
-            errors["cost_amount"] = _("Enter an amount when selecting a currency.")
-        if self.cost_amount is not None and not self.cost_currency_id:
-            errors["cost_currency"] = _("Select the currency of the cost.")
         if (
             self.workshop_id
             and self.blueprint_id
@@ -916,6 +883,12 @@ class Activity(models.Model):
             errors["equipment"] = _(
                 "The equipment must belong to the activity's workshop."
             )
+        if (
+            self.cost_id
+            and self.workshop_id
+            and self.cost.workshop_id != self.workshop_id
+        ):
+            errors["cost"] = _("The cost must belong to the activity's workshop.")
         if errors:
             raise ValidationError(errors)
 
@@ -1290,3 +1263,92 @@ class Currency(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.code})"
+
+
+class CurrencyTransaction(models.Model):
+    """A signed financial transaction linked to workshop resources."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    workshop = models.ForeignKey(
+        Workshop, on_delete=models.PROTECT, related_name="transactions"
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    description = models.CharField(max_length=500)
+    amount = models.DecimalField(
+        max_digits=19,
+        decimal_places=6,
+        help_text=_("Negative for expenses, positive for income."),
+    )
+    currency = models.ForeignKey(
+        "Currency", on_delete=models.PROTECT, related_name="transactions"
+    )
+    category = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text=_("Optional category or account path, such as workshop:tools."),
+    )
+    payment_account = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text=_("Optional payment account or other source of funds."),
+    )
+    merchant = models.CharField(max_length=255, blank=True)
+    order_reference = models.CharField(max_length=255, blank=True)
+    url = models.URLField(max_length=1000, blank=True)
+    notes = models.TextField(blank=True)
+    project = models.ForeignKey(
+        "Project",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="transactions",
+    )
+
+    material_lot = models.OneToOneField(
+        "MaterialLot",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="transaction",
+        help_text=_(
+            "The whole transaction is the cost of this lot; income cannot be linked."
+        ),
+    )
+    equipment = models.ForeignKey(
+        "Equipment",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="transactions",
+    )
+
+    class Meta:
+        ordering = ("-created_at", "description")
+
+    def __str__(self):
+        return self.description
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        for field, resource in (
+            ("project", self.project if self.project_id else None),
+            ("equipment", self.equipment if self.equipment_id else None),
+            ("material_lot", self.material_lot if self.material_lot_id else None),
+        ):
+            if resource and self.workshop_id:
+                workshop_id = (
+                    resource.material.workshop_id
+                    if field == "material_lot"
+                    else resource.workshop_id
+                )
+                if workshop_id != self.workshop_id:
+                    errors[field] = _("This must belong to the same workshop.")
+        if self.material_lot_id and self.amount is not None and self.amount > 0:
+            errors["amount"] = _("A material lot purchase cannot be income.")
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

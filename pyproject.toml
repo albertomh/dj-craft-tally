@@ -124,7 +124,10 @@ select = [
 "src/dj_craft_tally/migrations/*.py" = ["E501", "I001", "RUF012"]
 
 [tool.coverage.report]
-omit = ["*/__init__.py"]
+omit = [
+    "*/__init__.py",
+    "*/migrations/*"
+]
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

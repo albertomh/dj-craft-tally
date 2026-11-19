@@ -5,8 +5,9 @@ from decimal import Decimal
 
 import pytest
 
-from dj_craft_tally.models import Currency, Material, MaterialLot
+from dj_craft_tally.models import Currency, Material
 from dj_craft_tally.services import expenditure_periods
+from tests.conftest import create_priced_lot
 
 
 @pytest.mark.django_db
@@ -22,7 +23,7 @@ def test_expenditure_periods_group_purchase_amounts_by_currency_and_window(
         ("2026-11-09T00:00Z", "8.00", gbp),
     ]
     for received_at, amount, currency in lots:
-        MaterialLot.objects.create(
+        create_priced_lot(
             material=material,
             quantity_per_package=1,
             received_at=received_at,
@@ -53,12 +54,12 @@ def test_expenditure_periods_group_purchase_amounts_by_currency_and_window(
 @pytest.mark.django_db
 def test_expenditure_periods_ignore_unpriced_and_zero_value_lots(material: Material):
     gbp = Currency.objects.get(code="GBP")
-    MaterialLot.objects.create(
+    create_priced_lot(
         material=material,
         quantity_per_package=1,
         received_at="2026-11-16T00:00Z",
     )
-    MaterialLot.objects.create(
+    create_priced_lot(
         material=material,
         quantity_per_package=1,
         received_at="2026-11-16T00:00Z",

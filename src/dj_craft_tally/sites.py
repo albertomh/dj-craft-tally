@@ -27,6 +27,7 @@ class CustomAdminSite(admin.AdminSite):
         "Equipment",
         "Material",
         "MaterialLot",
+        "CurrencyTransaction",
         "Blueprint",
         "Project",
         "ProjectStatusChange",

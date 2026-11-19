@@ -3,7 +3,6 @@
 from decimal import Decimal
 
 import pytest
-from django.core.exceptions import ValidationError
 
 from dj_craft_tally.models import (
     Blueprint,
@@ -12,8 +11,8 @@ from dj_craft_tally.models import (
     InventoryTransaction,
     InventoryTransactionLine,
     Material,
-    MaterialLot,
 )
+from tests.conftest import create_priced_lot
 
 
 @pytest.mark.django_db
@@ -27,49 +26,6 @@ def test_zero_output_has_no_cost_estimate(blueprint: Blueprint):
 
 
 @pytest.mark.django_db
-def test_lot_purchase_amount_is_optional_and_has_a_currency(material: Material) -> None:
-    unpriced_lot = MaterialLot.objects.create(material=material, quantity_per_package=1)
-    priced_lot = MaterialLot.objects.create(
-        material=material,
-        quantity_per_package=1,
-        purchase_amount=Decimal("12.50"),
-        purchase_currency=Currency.objects.get(code="EUR"),
-    )
-
-    assert unpriced_lot.purchase_amount is None
-    assert unpriced_lot.purchase_currency is None
-    assert priced_lot.purchase_amount == Decimal("12.50")
-    assert priced_lot.purchase_currency_id == "EUR"
-
-
-@pytest.mark.django_db
-def test_lot_purchase_amount_and_currency_must_be_recorded_together(
-    material: Material,
-) -> None:
-    with pytest.raises(ValidationError, match="Select the currency"):
-        MaterialLot.objects.create(
-            material=material,
-            quantity_per_package=1,
-            purchase_amount=Decimal("12.50"),
-        )
-
-    with pytest.raises(ValidationError, match="Enter the amount"):
-        MaterialLot.objects.create(
-            material=material,
-            quantity_per_package=1,
-            purchase_currency=Currency.objects.get(code="GBP"),
-        )
-
-    with pytest.raises(ValidationError, match="greater than or equal to"):
-        MaterialLot.objects.create(
-            material=material,
-            quantity_per_package=1,
-            purchase_amount=Decimal("-0.01"),
-            purchase_currency=Currency.objects.get(code="GBP"),
-        )
-
-
-@pytest.mark.django_db
 def test_blueprint_cost_uses_oldest_lot_then_newer_lot_for_shortfall(
     blueprint: Blueprint, material: Material
 ) -> None:
@@ -79,14 +35,14 @@ def test_blueprint_cost_uses_oldest_lot_then_newer_lot_for_shortfall(
         blueprint=blueprint, material=material, quantity=Decimal("500")
     )
     currency = Currency.objects.get(code="GBP")
-    oldest = MaterialLot.objects.create(
+    oldest = create_priced_lot(
         material=material,
         quantity_per_package=100,
         received_at="2026-01-01T00:00Z",
         purchase_amount=Decimal("10"),
         purchase_currency=currency,
     )
-    newer = MaterialLot.objects.create(
+    newer = create_priced_lot(
         material=material,
         package_count=4,
         quantity_per_package=100,
@@ -108,7 +64,7 @@ def test_blueprint_cost_returns_empty_when_lots_cannot_cover_requirement(
     BlueprintMaterialRequirement.objects.create(
         blueprint=blueprint, material=material, quantity=Decimal("500")
     )
-    MaterialLot.objects.create(
+    create_priced_lot(
         material=material,
         quantity_per_package=100,
         purchase_amount=Decimal("10"),
@@ -125,14 +81,14 @@ def test_oldest_lot_fully_covering_requirement_excludes_newer_lot(
     BlueprintMaterialRequirement.objects.create(
         blueprint=blueprint, material=material, quantity=Decimal("5")
     )
-    oldest = MaterialLot.objects.create(
+    oldest = create_priced_lot(
         material=material,
         quantity_per_package=10,
         received_at="2026-01-01T00:00Z",
         purchase_amount=Decimal("100"),
         purchase_currency_id="GBP",
     )
-    MaterialLot.objects.create(
+    create_priced_lot(
         material=material,
         quantity_per_package=10,
         received_at="2026-02-01T00:00Z",
@@ -153,13 +109,13 @@ def test_lots_without_receipt_dates_follow_dated_lots(blueprint, material):
     BlueprintMaterialRequirement.objects.create(
         blueprint=blueprint, material=material, quantity=Decimal("2")
     )
-    undated = MaterialLot.objects.create(
+    undated = create_priced_lot(
         material=material,
         quantity_per_package=1,
         purchase_amount=Decimal("9"),
         purchase_currency_id="GBP",
     )
-    dated = MaterialLot.objects.create(
+    dated = create_priced_lot(
         material=material,
         quantity_per_package=1,
         received_at="2026-01-01T00:00Z",
@@ -188,14 +144,14 @@ def test_cost_uses_remaining_posted_stock_and_skips_exhausted_lots(blueprint, ma
     BlueprintMaterialRequirement.objects.create(
         blueprint=blueprint, material=material, quantity=Decimal("6")
     )
-    oldest = MaterialLot.objects.create(
+    oldest = create_priced_lot(
         material=material,
         quantity_per_package=10,
         received_at="2026-01-01T00:00Z",
         purchase_amount=Decimal("10"),
         purchase_currency_id="GBP",
     )
-    newer = MaterialLot.objects.create(
+    newer = create_priced_lot(
         material=material,
         quantity_per_package=10,
         received_at="2026-02-01T00:00Z",
@@ -220,7 +176,7 @@ def test_unallocated_posted_movement_makes_lot_cost_uncertain(blueprint, materia
     BlueprintMaterialRequirement.objects.create(
         blueprint=blueprint, material=material, quantity=Decimal("1")
     )
-    lot = MaterialLot.objects.create(
+    lot = create_priced_lot(
         material=material,
         quantity_per_package=10,
         purchase_amount=Decimal("10"),

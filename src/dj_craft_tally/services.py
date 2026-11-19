@@ -4,10 +4,9 @@ from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from typing import TypedDict
 
-from django.db.models import Case, Sum, When
 from django.utils.translation import gettext_lazy as _
 
-from dj_craft_tally.models import MaterialLot
+from dj_craft_tally.models import CurrencyTransaction
 
 
 class TotalForPeriod(TypedDict):
@@ -17,7 +16,7 @@ class TotalForPeriod(TypedDict):
 
 
 def expenditure_periods(*, as_of: date | None = None) -> list[TotalForPeriod]:
-    """Return material purchase totals for common reporting periods.
+    """Return transaction totals by period.
 
     The result contains raw :class:`~decimal.Decimal` amounts grouped by
     currency code. It deliberately contains no admin or presentation-layer
@@ -31,49 +30,28 @@ def expenditure_periods(*, as_of: date | None = None) -> list[TotalForPeriod]:
     quarter_start = today.replace(month=quarter_month, day=1)
     ytd_start = today.replace(month=1, day=1)
 
-    expenditure_data = (
-        MaterialLot.objects.filter(
-            received_at__gte=datetime.combine(ytd_start, time.min, tzinfo=UTC),
-            purchase_amount__isnull=False,
-        )
-        .values("purchase_currency_id")
-        .annotate(
-            last_week=Sum(
-                Case(
-                    When(
-                        received_at__gte=datetime.combine(
-                            last_week_start, time.min, tzinfo=UTC
-                        ),
-                        then="purchase_amount",
-                    ),
-                    default=Decimal("0"),
-                )
-            ),
-            quarter=Sum(
-                Case(
-                    When(
-                        received_at__gte=datetime.combine(
-                            quarter_start, time.min, tzinfo=UTC
-                        ),
-                        then="purchase_amount",
-                    ),
-                    default=Decimal("0"),
-                )
-            ),
-            ytd=Sum("purchase_amount"),
-        )
-    )
-
     totals: dict[str, dict[str, Decimal]] = {
         "last_week": {},
         "quarter": {},
         "ytd": {},
     }
-    for row in expenditure_data:
-        code = row["purchase_currency_id"]
-        for period, period_totals in totals.items():
-            if row[period]:
-                period_totals[code] = row[period]
+    start_of_year = datetime.combine(ytd_start, time.min, tzinfo=UTC)
+    end_of_today = datetime.combine(today + timedelta(days=1), time.min, tzinfo=UTC)
+    for transaction in CurrencyTransaction.objects.filter(
+        created_at__gte=start_of_year, created_at__lt=end_of_today, amount__lt=0
+    ):
+        for period, start in (
+            ("last_week", last_week_start),
+            ("quarter", quarter_start),
+            ("ytd", ytd_start),
+        ):
+            if transaction.amount and transaction.created_at >= datetime.combine(
+                start, time.min, tzinfo=UTC
+            ):
+                currency = transaction.currency_id
+                totals[period][currency] = (
+                    totals[period].get(currency, Decimal("0")) - transaction.amount
+                )
 
     return [
         {"key": "last_week", "label": _("Last week"), "totals": totals["last_week"]},
