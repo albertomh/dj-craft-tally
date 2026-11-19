@@ -12,6 +12,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from dj_craft_tally.models import (
+    Activity,
+    ActivityMeasurement,
     Blueprint,
     BlueprintMaterialRequirement,
     Currency,
@@ -21,8 +23,6 @@ from dj_craft_tally.models import (
     Material,
     MaterialLot,
     Project,
-    ProjectStep,
-    ProjectStepMeasurement,
     Unit,
     Workshop,
     WorkshopMembership,
@@ -236,7 +236,7 @@ class Command(BaseCommand):
                 occurred_at=occurred_at,
                 reference=reference,
                 project=project,
-                project_step=step,
+                activity=step,
             )
             values = {
                 "transaction": entry,
@@ -264,7 +264,7 @@ class Command(BaseCommand):
                 occurred_at=occurred_at,
                 reference=reference,
                 project=project,
-                project_step=step,
+                activity=step,
             )
             for material, lot, quantity, notes in lines:
                 InventoryTransactionLine.objects.create(
@@ -398,9 +398,8 @@ class Command(BaseCommand):
             recipe = recipes[key]
             done = new_project(name, description, key)
             done.set_status(Project.Status.ACTIVE, notes="Started")
-            done_step = ProjectStep.objects.create(
+            done_step = Activity.objects.create(
                 project=done,
-                sequence=1,
                 name=recipe["step_name"],
                 blueprint=recipe["blueprint"],
                 equipment=recipe["equipment"],
@@ -408,8 +407,8 @@ class Command(BaseCommand):
                 occurred_at=now,
             )
             main_material, main_quantity = recipe["inputs"][0]
-            ProjectStepMeasurement.objects.create(
-                project_step=done_step,
+            ActivityMeasurement.objects.create(
+                activity=done_step,
                 name=f"{main_material.name} used",
                 quantity=Decimal(main_quantity),
                 unit=main_material.unit,
@@ -440,17 +439,16 @@ class Command(BaseCommand):
             description="Print a prototype for the workshop desk.",
         )
         project.set_status(Project.Status.ACTIVE, notes="Prototype underway")
-        step = ProjectStep.objects.create(
+        step = Activity.objects.create(
             project=project,
-            sequence=1,
             name="Print prototype",
             blueprint=blueprint,
             equipment=printer,
             outcome="success",
             occurred_at=now,
         )
-        ProjectStepMeasurement.objects.create(
-            project_step=step, name="Filament used", quantity=125, unit=gram
+        ActivityMeasurement.objects.create(
+            activity=step, name="Filament used", quantity=125, unit=gram
         )
         multi_line_movement(
             InventoryTransaction.Kind.PRODUCE,

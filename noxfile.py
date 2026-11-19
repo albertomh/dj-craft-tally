@@ -17,12 +17,12 @@ nox.options.default_venv_backend = "uv|virtualenv"
 nox.options.sessions = [f"test(python='{MATRIX[-1][0]}', django='{MATRIX[-1][1]}')"]
 
 
-def _install_deps(session: nox.Session, django_version: str) -> None:
+def _install_deps(session: nox.Session, python_version: str, django_version: str) -> None:
     session.run_install(
         "uv",
         "sync",
         "--group=test",
-        f"--python={session.virtualenv.location}",
+        f"--python={python_version}",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
     session.install(f"django~={django_version}.0")
@@ -31,7 +31,7 @@ def _install_deps(session: nox.Session, django_version: str) -> None:
 @nox.session
 @nox.parametrize(("python", "django"), MATRIX)
 def test(session: nox.Session, python: str, django: str) -> None:
-    _install_deps(session, django)
+    _install_deps(session, python, django)
 
     session.run("coverage", "erase")
 

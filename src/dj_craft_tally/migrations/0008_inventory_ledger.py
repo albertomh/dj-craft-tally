@@ -8,7 +8,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("crafttally", "0007_project_steps"),
+        ("crafttally", "0007_activities"),
     ]
 
     operations = [
@@ -57,13 +57,13 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "project_step",
+                    "activity",
                     models.ForeignKey(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="inventory_transactions",
-                        to="crafttally.projectstep",
+                        to="crafttally.activity",
                     ),
                 ),
                 (

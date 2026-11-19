@@ -10,6 +10,7 @@ from django.utils.translation import override
 
 import dj_craft_tally.admin as ct_admin
 from dj_craft_tally.models import (
+    Activity,
     Blueprint,
     BlueprintMaterialRequirement,
     Currency,
@@ -18,7 +19,6 @@ from dj_craft_tally.models import (
     Material,
     MaterialLot,
     Project,
-    ProjectStep,
 )
 
 
@@ -108,6 +108,48 @@ def test_material_lot_admin_places_currency_before_amount_and_hides_help_text():
     assert form.base_fields["purchase_amount"].help_text == ""
     assert form.base_fields["purchase_currency"].widget.can_add_related is False
     assert form.base_fields["purchase_currency"].widget.can_view_related is False
+
+
+@pytest.mark.django_db
+@override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"])
+def test_activity_admin_groups_currency_and_amount(client, workshop):
+    user = get_user_model().objects.create_superuser(username="admin", password="test")
+    activity = Activity.objects.create(workshop=workshop, name="Print")
+    client.force_login(user)
+
+    for url in (
+        "/admin/crafttally/activity/add/",
+        f"/admin/crafttally/activity/{activity.pk}/change/",
+    ):
+        response = client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        rows = [
+            [field.field.name for field in line]
+            for fieldset in response.context["adminform"]
+            for line in fieldset
+        ]
+        assert ["cost_currency", "cost_amount"] in rows
+        assert b'id="id_cost_currency"' in response.content
+        assert b'id="id_cost_amount"' in response.content
+
+
+@pytest.mark.django_db
+@override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"])
+def test_datetime_inputs_use_the_shared_admin_layout(client):
+    user = get_user_model().objects.create_superuser(username="admin", password="test")
+    client.force_login(user)
+
+    for model, field in (
+        ("activity", "occurred_at"),
+        ("inventorytransaction", "occurred_at"),
+        ("materiallot", "received_at"),
+        ("project", "completed_at"),
+    ):
+        response = client.get(f"/admin/crafttally/{model}/add/")
+        assert response.status_code == HTTPStatus.OK
+        assert b"dj_craft_tally/css/datetime_layout.css" in response.content
+        assert f'id="id_{field}_0"'.encode() in response.content
+        assert f'id="id_{field}_1"'.encode() in response.content
 
 
 @pytest.mark.django_db
@@ -227,9 +269,8 @@ def test_admin_changelists_use_human_labels_and_unit_precision(
     stock.post()
     project = Project.objects.create(workshop=workshop, name="Kitchen tiles")
     project.set_status(Project.Status.ACTIVE)
-    step = ProjectStep.objects.create(
+    step = Activity.objects.create(
         project=project,
-        sequence=1,
         name="Press tiles",
         occurred_at="2026-01-02T00:00Z",
     )
@@ -238,7 +279,7 @@ def test_admin_changelists_use_human_labels_and_unit_precision(
         kind=InventoryTransaction.Kind.CONSUME,
         occurred_at="2026-01-02T12:30Z",
         project=project,
-        project_step=step,
+        activity=step,
         reference="Clay for first batch",
     )
     InventoryTransactionLine.objects.create(
@@ -264,7 +305,7 @@ def test_admin_changelists_use_human_labels_and_unit_precision(
     assert lot_response.status_code == HTTPStatus.OK
     assert b">2000.00 g</span>" in lot_response.content
 
-    step_response = client.get("/admin/crafttally/projectstep/")
+    step_response = client.get("/admin/crafttally/activity/")
     assert step_response.status_code == HTTPStatus.OK
     assert b"Kitchen tiles" in step_response.content
     assert b"Project object" not in step_response.content
@@ -279,7 +320,7 @@ def test_admin_changelists_use_human_labels_and_unit_precision(
     transaction_response = client.get("/admin/crafttally/inventorytransaction/")
     assert transaction_response.status_code == HTTPStatus.OK
     assert b"Kitchen tiles" in transaction_response.content
-    assert b"Kitchen tiles \xc2\xb7 1: Press tiles" in transaction_response.content
+    assert b"Kitchen tiles: Press tiles" in transaction_response.content
 
     line_response = client.get("/admin/crafttally/inventorytransactionline/")
     assert line_response.status_code == HTTPStatus.OK

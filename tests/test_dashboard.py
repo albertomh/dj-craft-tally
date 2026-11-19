@@ -1,5 +1,6 @@
 """Tests for the custom admin dashboard on the CustomAdminSite."""
 
+import html
 from decimal import Decimal
 
 import pytest
@@ -164,3 +165,46 @@ def test_dashboard_renders(dashboard_site, dashboard_request, workshop, item, gr
     assert "?status=active" in content
     # The four summary cards link to their model changelists.
     assert "crafttally/blueprint/" in content
+
+
+@pytest.mark.django_db
+@override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"])
+@override("en")
+def test_dashboard_expenditure_cards_show_each_total_and_empty_period(
+    dashboard_site, dashboard_request, monkeypatch
+):
+    monkeypatch.setattr(
+        "dj_craft_tally.sites.expenditure_periods",
+        lambda: [
+            {"label": "Last week", "totals": {}},
+            {"label": "Current quarter", "totals": {"GBP": Decimal("12.50")}},
+            {
+                "label": "Year to date",
+                "totals": {"GBP": Decimal("15.00"), "EUR": Decimal("8.00")},
+            },
+        ],
+    )
+    content = render_dashboard(dashboard_site, dashboard_request)
+    cards = content.split('<div class="ct-card ct-expenditure-card">')[1:]
+    last_week, quarter, year = cards
+    assert '<span class="ct-count">—</span>' in html.unescape(last_week)
+    assert "£12.50" in quarter
+    assert "£15.00" in year
+    assert "8.00" in year
+    assert "currencies" not in "".join(cards)
+
+
+@pytest.mark.django_db
+@override_settings(ROOT_URLCONF="tests.admin_urls", ALLOWED_HOSTS=["testserver"])
+@override("en")
+def test_dashboard_expenditure_cards_show_dashes_when_no_purchases(
+    dashboard_site, dashboard_request
+):
+    content = render_dashboard(dashboard_site, dashboard_request)
+    cards = content.split('<div class="ct-card ct-expenditure-card">')[1:]
+    last_week, quarter, year = cards
+    assert all(
+        '<span class="ct-count">—</span>' in html.unescape(card)
+        for card in (last_week, quarter, year)
+    )
+    assert "No purchases recorded yet." not in content
