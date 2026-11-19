@@ -138,9 +138,19 @@ must preserve these invariants.
 Record observed inputs, outputs (yield), or waste as activity materials. The material is
 identified even when its quantity is unknown; when a quantity is known, choose its unit
 explicitly. Use named step measurements for other values, such as estimated and actual
-duration, or the portion of resin used for supports. Record an optional cost with its
-currency, and use notes for files or other instructions. These observations do not
+duration, or the portion of resin used for supports. Link an optional financial
+transaction, and use notes for files or other instructions. These observations do not
 change stock: record and post explicit inventory transactions for stock movements. An
 observation can optionally reference a posted inventory line for the same step and
 material, with the appropriate movement direction. The link identifies a related
 movement; observed and stock quantities may differ and are not automatically reconciled.
+
+### Recording financial transactions
+
+Record expenses as negative amounts and income as positive amounts, with a date,
+currency, category, payment account, merchant and other details. A transaction can
+refer to a project or equipment in the same workshop, and an activity can reference a
+transaction from its workshop. Link a nonpositive transaction to a material lot to use
+its full amount as the lot's purchase cost in blueprint estimates. The expenditure
+dashboard totals expenses as positive costs and excludes income. Financial transactions
+do not change inventory; creating a lot records its receipt through the inventory ledger.
