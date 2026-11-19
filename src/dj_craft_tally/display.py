@@ -46,7 +46,10 @@ def format_money(value: Decimal | None, currency: "Currency | None"):
     rounded = value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     if not rounded:
         rounded = rounded.copy_abs()
-    shown = formats.number_format(rounded, decimal_pos=2, use_l10n=True)
+
+    sign = "-" if rounded < Decimal("0") else ""
+    shown = formats.number_format(rounded.copy_abs(), decimal_pos=2, use_l10n=True)
+
     if currency.symbol_position == "prefix":
-        return format_html("{}{}", currency.symbol, shown)
-    return format_html("{} {}", shown, currency.symbol)
+        return format_html("{}{}{}", sign, currency.symbol, shown)
+    return format_html("{}{} {}", sign, shown, currency.symbol)

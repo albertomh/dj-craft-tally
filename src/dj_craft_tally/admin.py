@@ -17,6 +17,7 @@ from dj_craft_tally.models import (
     Blueprint,
     BlueprintMaterialRequirement,
     Currency,
+    CurrencyTransaction,
     Equipment,
     InventoryTransaction,
     InventoryTransactionLine,
@@ -223,8 +224,38 @@ class WorkshopMembershipAdmin(admin.ModelAdmin):
     search_fields: ClassVar = ("workshop__name", "user__username")
 
 
+class MaterialLotInline(admin.TabularInline):
+    model = MaterialLot
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    fields: ClassVar = (
+        "reference",
+        "received_at",
+        "supplier",
+        "package_count",
+        "quantity_per_package",
+        "display_cost",
+    )
+    readonly_fields: ClassVar = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("transaction__currency")
+
+    @admin.display(description=_("Paid"))
+    def display_cost(self, obj):
+        transaction = getattr(obj, "transaction", None)
+        amount = -transaction.amount if transaction else None
+        currency = transaction.currency if transaction else None
+        return format_money(amount, currency)
+
+
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
+    inlines: ClassVar = (MaterialLotInline,)
     list_display: ClassVar = ("name", "kind", "workshop", "display_stock_balance")
     list_select_related: ClassVar = ("unit",)
     list_filter: ClassVar = ("workshop", "kind")
@@ -255,7 +286,6 @@ class MaterialLotAdmin(DateTimeLayoutAdmin):
                     "package_count",
                     "quantity_per_package",
                     "received_at",
-                    ("purchase_currency", "purchase_amount"),
                     "notes",
                 )
             },
@@ -270,8 +300,8 @@ class MaterialLotAdmin(DateTimeLayoutAdmin):
         "display_quantity_per_package",
         "display_purchase_amount",
     )
-    list_select_related: ClassVar = ("material__unit", "purchase_currency")
-    list_filter: ClassVar = ("material", "purchase_currency")
+    list_select_related: ClassVar = ("material__unit", "transaction__currency")
+    list_filter: ClassVar = ("material",)
     search_fields: ClassVar = ("reference", "supplier", "material__name")
     formfield_overrides: ClassVar = _textarea_overrides(
         rows=2, min_width=_WIDE_TEXTAREA_MIN_WIDTH
@@ -283,10 +313,13 @@ class MaterialLotAdmin(DateTimeLayoutAdmin):
             obj.quantity_per_package, obj.material.unit, include_unit_code=True
         )
 
-    @admin.display(description=_("Paid"), ordering="purchase_amount")
+    @admin.display(description=_("Paid"), ordering="transaction__amount")
     def display_purchase_amount(self, obj):
-        formatted = format_money(obj.purchase_amount, obj.purchase_currency)
-        return format_html('<span class="ct-mono">{}</span>', formatted)
+        transaction = getattr(obj, "transaction", None)
+        if transaction:
+            formatted = format_money(-transaction.amount, transaction.currency)
+            return format_html('<span class="ct-mono">{}</span>', formatted)
+        return "-"
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -298,15 +331,6 @@ class MaterialLotAdmin(DateTimeLayoutAdmin):
                 "reference",
             )
         return super().get_readonly_fields(request, obj)
-
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        purchase_currency_field = form.base_fields["purchase_currency"]
-        purchase_currency_field.widget.can_add_related = False
-        purchase_currency_field.widget.can_view_related = False
-        purchase_currency_field.help_text = ""
-        form.base_fields["purchase_amount"].help_text = ""
-        return form
 
 
 @admin.register(Equipment)
@@ -443,7 +467,7 @@ class ActivityAdmin(DateTimeLayoutAdmin):
         "blueprint",
         "equipment",
         "reference",
-        ("cost_currency", "cost_amount"),
+        "cost",
         "outcome",
         "occurred_at",
         "notes",
@@ -593,3 +617,47 @@ class InventoryTransactionLineAdmin(admin.ModelAdmin):
             actions = super().get_actions(request, action_location=action_location)
         actions.pop("delete_selected", None)
         return actions
+
+
+@admin.register(CurrencyTransaction)
+class CurrencyTransactionAdmin(DateTimeLayoutAdmin):
+    formfield_overrides: ClassVar = {models.URLField: {"assume_scheme": "https"}}
+    fields: ClassVar = (
+        "workshop",
+        "created_at",
+        "description",
+        ("currency", "amount"),
+        "category",
+        "payment_account",
+        "merchant",
+        "order_reference",
+        "url",
+        "notes",
+        "project",
+        "material_lot",
+        "equipment",
+    )
+    list_display: ClassVar = (
+        "created_at",
+        "description",
+        "workshop",
+        "category",
+        "merchant",
+        "display_amount",
+    )
+    list_filter: ClassVar = ("workshop", "currency", "category", "created_at")
+    search_fields: ClassVar = (
+        "description",
+        "category",
+        "merchant",
+        "order_reference",
+        "notes",
+    )
+    autocomplete_fields: ClassVar = ("project", "material_lot", "equipment")
+
+    @admin.display(description=_("Amount"))
+    def display_amount(self, obj: CurrencyTransaction):
+        formatted = format_money(obj.amount, obj.currency)
+        if formatted is None:
+            return "-"
+        return format_html('<span class="ct-mono ct-right">{}</span>', formatted)

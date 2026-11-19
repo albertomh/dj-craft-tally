@@ -1,7 +1,8 @@
 #result_list td.field-display_output_quantity,
 #result_list td.field-display_cost_per_output_unit,
 #result_list td.field-available_runs,
-#result_list td.field-display_available_output {
+#result_list td.field-display_available_output,
+#result_list td.field-display_amount {
     text-align: right !important;
 }
 
