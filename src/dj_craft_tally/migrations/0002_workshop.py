@@ -9,7 +9,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("crafttally", "0001_initial"),
+        ("crafttally", "0001_unit"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
