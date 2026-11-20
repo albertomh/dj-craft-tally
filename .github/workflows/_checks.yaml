@@ -32,6 +32,8 @@ jobs:
       - uses: $/.github/actions/prek
 
   translations:
+    needs:
+      - pre_commit
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7.0.1
@@ -45,7 +47,7 @@ jobs:
             msgfmt --check --check-format "$catalog"
           done
 
-  generate_matrix:
+  generate_nox_py_versions:
     runs-on: ubuntu-26.04
     outputs:
       session: ${{ steps.set-matrix.outputs.session }}
@@ -63,11 +65,11 @@ jobs:
   test:
     needs:
       - pre_commit
-      - generate_matrix
+      - generate_nox_py_versions
     strategy:
       fail-fast: false
       matrix:
-        session: ${{ fromJSON(needs.generate_matrix.outputs.session) }}
+        session: ${{ fromJSON(needs. generate_nox_py_versions.outputs.session) }}
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7.0.1
@@ -89,7 +91,7 @@ jobs:
       - pre_commit
       - gha_lockfile
       - translations
-      - generate_matrix
+      - generate_nox_py_versions
       - test
     runs-on: ubuntu-26.04
     steps:
