@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/albertomh/dj-craft-tally/compare/0.2.0...0.3.0) (2026-11-20)
+
+
+### Features
+
+* Add 'brand' field to material model ([#81](https://github.com/albertomh/dj-craft-tally/issues/81)) ([6cd93da](https://github.com/albertomh/dj-craft-tally/commit/6cd93da1b90f4745eefb3d76efe775361a00aafa))
+* Associate materials with equipment ([#80](https://github.com/albertomh/dj-craft-tally/issues/80)) ([1a2c6c2](https://github.com/albertomh/dj-craft-tally/commit/1a2c6c23a29346937e340434af997376c158e90c))
+
 ## [0.2.0](https://github.com/albertomh/dj-craft-tally/compare/0.1.0...0.2.0) (2026-11-20)
 
 
