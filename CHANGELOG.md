@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/albertomh/dj-craft-tally/compare/0.1.0...0.2.0) (2026-11-20)
+
+
+### Features
+
+* Add es_ES & fr_FR translations ([#72](https://github.com/albertomh/dj-craft-tally/issues/72)) ([30c0476](https://github.com/albertomh/dj-craft-tally/commit/30c04767594ff1f9e257688d515bfcd9f4cecfdf))
+* Add expenditure reporting service ([#67](https://github.com/albertomh/dj-craft-tally/issues/67)) ([944fef6](https://github.com/albertomh/dj-craft-tally/commit/944fef6fafbe7b7b4c3e15b62055ace1f98b5569))
+* Estimate blueprint material cost per output ([#73](https://github.com/albertomh/dj-craft-tally/issues/73)) ([6442a9d](https://github.com/albertomh/dj-craft-tally/commit/6442a9d29ed89b1a537deee8cb69793073c2f4c5))
+* Link workshop expenses to materials and equipment ([#75](https://github.com/albertomh/dj-craft-tally/issues/75)) ([82ca45f](https://github.com/albertomh/dj-craft-tally/commit/82ca45fb557b50ebd1fd5c186f0a91f8dc561d75))
+* Model reusable processes and production activities ([#74](https://github.com/albertomh/dj-craft-tally/issues/74)) ([7a9c155](https://github.com/albertomh/dj-craft-tally/commit/7a9c1559ab9f50217b6948e5ae8725057fca90be))
+* Record material lot purchase costs ([#66](https://github.com/albertomh/dj-craft-tally/issues/66)) ([1f00700](https://github.com/albertomh/dj-craft-tally/commit/1f007006f0f37437ec68bec8e874fe0182ad6e43))
+
 ## 0.1.0 (2026-11-15)
 
 
