@@ -206,6 +206,7 @@ class MaterialLotAdmin(DateTimeLayoutAdmin):
     )
     list_select_related: ClassVar = ("material__unit", "transaction__currency")
     list_filter: ClassVar = ("material",)
+    ordering: ClassVar = ("-received_at",)
     search_fields: ClassVar = ("reference", "supplier", "material__name")
     formfield_overrides: ClassVar = textarea_overrides(
         rows=2, min_width=_WIDE_TEXTAREA_MIN_WIDTH

@@ -274,6 +274,62 @@ class Equipment(models.Model):
         return self.name
 
 
+class EquipmentMaterial(models.Model):
+    """A material used by, or kept as a replacement for, equipment."""
+
+    class Role(models.TextChoices):
+        INPUT = "input", _("Input")
+        REPLACEMENT = "replacement", _("Replacement")
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    equipment = models.ForeignKey(
+        Equipment, on_delete=models.CASCADE, related_name="material_associations"
+    )
+    material = models.ForeignKey(
+        Material, on_delete=models.PROTECT, related_name="equipment_associations"
+    )
+    role = models.CharField(max_length=16, choices=Role, default=Role.INPUT)
+
+    class Meta:
+        verbose_name = _("Equipment material")
+        verbose_name_plural = _("Equipment materials")
+        ordering = ("role", "material__name")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["equipment", "material"], name="unique_equipment_material"
+            ),
+        )
+
+    def clean(self) -> None:
+        super().clean()
+        if self.equipment_id and self.material_id:
+            equipment_workshop_id = (
+                Equipment.objects.filter(pk=self.equipment_id)
+                .values_list("workshop_id", flat=True)
+                .first()
+            )
+            material_workshop_id = (
+                Material.objects.filter(pk=self.material_id)
+                .values_list("workshop_id", flat=True)
+                .first()
+            )
+            if (
+                equipment_workshop_id
+                and material_workshop_id
+                and equipment_workshop_id != material_workshop_id
+            ):
+                raise ValidationError(
+                    {
+                        "material": _(
+                            "Equipment and material must belong to the same workshop."
+                        )
+                    }
+                )
+
+    def __str__(self) -> str:
+        return f"{self.equipment}: {self.material} ({self.get_role_display()})"
+
+
 @dataclass(frozen=True, slots=True)
 class LotUsage:
     lot: "MaterialLot"
