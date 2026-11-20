@@ -3,6 +3,7 @@
 <!-- markdownlint-disable MD013 line-length -->
 ![python >= 3.11](https://img.shields.io/badge/Python>=3.11-4584b6?logo=python&logoColor=ffde57&style=flat-square)
 [![Django >= 5.2](https://img.shields.io/badge/Django>=5.2-092E20?logo=django&logoColor=ffffff&style=flat-square)](https://docs.djangoproject.com/en/stable/)
+![i18n](https://img.shields.io/badge/🌐_ES,_FR-FFFFFF?style=flat-square)
 [![prek](https://img.shields.io/badge/prek-CC5A23?logo=prek&logoColor=FFFFFF&style=flat-square)](https://github.com/j178/prek)
 [![pytest](https://img.shields.io/badge/pytest-0A9EDC?logo=pytest&logoColor=white&style=flat-square)](https://github.com/pytest-dev/pytest)
 [![nox](https://img.shields.io/badge/%F0%9F%A6%8A-Nox-D85E00.svg?style=flat-square)](https://github.com/wntrblm/nox)
@@ -11,7 +12,7 @@
 [![PyPI Version](https://img.shields.io/pypi/v/dj-craft-tally?style=flat-square&labelColor=0073b7&color=0073b7&label=📦%20PyPI)](https://pypi.org/project/dj-craft-tally/)
 <!-- markdownlint-enable MD013 line-length -->
 
-`dj-craft-tally` is a Django app to help makers track projects and inventory in their workshop.
+`dj-craft-tally` is a Django app to help makers track projects and inventory across workshops.
 
 > [!IMPORTANT]
 > The project is in early development and uses 0.x versions.  

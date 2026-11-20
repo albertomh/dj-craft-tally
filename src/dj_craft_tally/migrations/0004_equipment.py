@@ -62,4 +62,53 @@ class Migration(migrations.Migration):
                 ],
             },
         ),
+        migrations.CreateModel(
+            name="EquipmentMaterial",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=dj_craft_tally.identifiers.uuid7,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "role",
+                    models.CharField(
+                        choices=[("input", "Input"), ("replacement", "Replacement")],
+                        default="input",
+                        max_length=16,
+                    ),
+                ),
+                (
+                    "equipment",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="material_associations",
+                        to="crafttally.equipment",
+                    ),
+                ),
+                (
+                    "material",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="equipment_associations",
+                        to="crafttally.material",
+                    ),
+                ),
+            ],
+            options={
+                "verbose_name": "Equipment material",
+                "verbose_name_plural": "Equipment materials",
+                "ordering": ("role", "material__name"),
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("equipment", "material"),
+                        name="unique_equipment_material",
+                    )
+                ],
+            },
+        ),
     ]

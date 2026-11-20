@@ -3,7 +3,7 @@ from typing import ClassVar
 from django.contrib import admin
 
 from dj_craft_tally.admin._utils import _WIDE_TEXTAREA_MIN_WIDTH, textarea_overrides
-from dj_craft_tally.models import CurrencyTransaction, Equipment
+from dj_craft_tally.models import CurrencyTransaction, Equipment, EquipmentMaterial
 
 
 class EquipmentTransactionInline(admin.TabularInline):
@@ -20,9 +20,16 @@ class EquipmentTransactionInline(admin.TabularInline):
     show_change_link = True
 
 
+class EquipmentMaterialInline(admin.TabularInline):
+    model = EquipmentMaterial
+    extra = 0
+    autocomplete_fields: ClassVar = ("material",)
+    fields: ClassVar = ("material", "role")
+
+
 @admin.register(Equipment)
 class EquipmentAdmin(admin.ModelAdmin):
-    inlines: ClassVar = (EquipmentTransactionInline,)
+    inlines: ClassVar = (EquipmentMaterialInline, EquipmentTransactionInline)
     list_display: ClassVar = (
         "name",
         "workshop",
