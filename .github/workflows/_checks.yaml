@@ -12,7 +12,7 @@ on:
   workflow_call:
 
 jobs:
-  lockfile:
+  gha_lockfile:
     runs-on: ubuntu-slim
     env:
       GH_TOKEN: ${{ github.token }}
@@ -30,6 +30,20 @@ jobs:
         with:
           persist-credentials: false
       - uses: $/.github/actions/prek
+
+  translations:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install gettext
+        run: sudo apt-get update && sudo apt-get install -y gettext
+      - name: Check gettext catalogs
+        run: |
+          for catalog in src/dj_craft_tally/locale/*/LC_MESSAGES/django.po; do
+            msgfmt --check --check-format "$catalog"
+          done
 
   generate_matrix:
     runs-on: ubuntu-26.04
@@ -67,3 +81,18 @@ jobs:
       - run: nox -s "$NOX_SESSION"
         env:
           NOX_SESSION: ${{ matrix.session }}
+
+  # Configure this check as the single required status check in the `automerge-checks` ruleset.
+  required:
+    if: ${{ always() }}
+    needs:
+      - pre_commit
+      - gha_lockfile
+      - translations
+      - generate_matrix
+      - test
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Fail when a check did not pass
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
+        run: exit 1
