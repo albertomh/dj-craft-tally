@@ -1,22 +1,16 @@
 """Public model exports, grouped internally by domain."""
 
-from .core import (
-    MAX_SCALE_TO_BASE,
-    MONEY_DECIMAL_PLACES,
-    QUANTITY_DECIMAL_PLACES,
-    QUANTITY_MAX_DIGITS,
-    Currency,
-    Unit,
-    Workshop,
-    WorkshopMembership,
+from dj_craft_tally.models.equipment import Equipment
+from dj_craft_tally.models.finance import CurrencyTransaction
+from dj_craft_tally.models.inventory import (
+    InventoryTransaction,
+    InventoryTransactionLine,
+    LedgerQuerySet,
 )
-from .finance import CurrencyTransaction
-from .inventory import InventoryTransaction, InventoryTransactionLine, LedgerQuerySet
-from .materials import (
+from dj_craft_tally.models.materials import (
     Blueprint,
     BlueprintMaterialRequirement,
     CostBreakdown,
-    Equipment,
     EquipmentMaterial,
     LotUsage,
     Material,
@@ -24,7 +18,7 @@ from .materials import (
     MaterialLotQuerySet,
     MaterialQuerySet,
 )
-from .projects import (
+from dj_craft_tally.models.projects import (
     Activity,
     ActivityMaterial,
     ActivityMeasurement,
@@ -34,6 +28,17 @@ from .projects import (
     Project,
     ProjectQuerySet,
     ProjectStatusChange,
+)
+
+from .core import (
+    MAX_SCALE_TO_BASE,
+    MONEY_DECIMAL_PLACES,
+    QUANTITY_DECIMAL_PLACES,
+    QUANTITY_MAX_DIGITS,
+    Currency,
+    Unit,
+    Workshop,
+    WorkshopMembership,
 )
 
 __all__ = [

@@ -26,6 +26,7 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
+                ("brand", models.CharField(blank=True, max_length=100)),
                 ("name", models.CharField(max_length=200)),
                 (
                     "kind",

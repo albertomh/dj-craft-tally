@@ -29,7 +29,9 @@ from tests.conftest import create_priced_lot
 def test_material_admin_displays_stock_using_unit_precision(workshop, item, gram):
     material_admin: ct_admin.MaterialAdmin = admin.site._registry[Material]
     assert "display_stock_balance" in material_admin.list_display
+    assert "brand" in material_admin.list_display
     assert "kind" in material_admin.list_display
+    assert "brand" in material_admin.search_fields
     assert "kind" in material_admin.list_filter
     for unit, quantity, shown in (
         (item, "96", "96"),
