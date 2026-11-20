@@ -163,10 +163,16 @@ class MaterialLotInline(admin.TabularInline):
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
     inlines: ClassVar = (MaterialLotInline,)
-    list_display: ClassVar = ("name", "kind", "workshop", "display_stock_balance")
+    list_display: ClassVar = (
+        "name",
+        "brand",
+        "kind",
+        "workshop",
+        "display_stock_balance",
+    )
     list_select_related: ClassVar = ("unit",)
     list_filter: ClassVar = ("workshop", "kind")
-    search_fields: ClassVar = ("name",)
+    search_fields: ClassVar = ("name", "brand")
     ordering: ClassVar = ("kind", "name")
     formfield_overrides: ClassVar = textarea_overrides(
         rows=5, min_width=_WIDE_TEXTAREA_MIN_WIDTH

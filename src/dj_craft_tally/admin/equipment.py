@@ -39,7 +39,12 @@ class EquipmentAdmin(admin.ModelAdmin):
         "model",
     )
     list_filter: ClassVar = ("workshop", "kind")
-    search_fields: ClassVar = ("name", "technology", "manufacturer", "model")
+    search_fields: ClassVar = (
+        "name",
+        "manufacturer",
+        "technology",
+        "model",
+    )
     formfield_overrides: ClassVar = textarea_overrides(
         rows=5, min_width=_WIDE_TEXTAREA_MIN_WIDTH
     )
