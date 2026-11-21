@@ -17,7 +17,9 @@ from dj_craft_tally.models import (
     Process,
     ProcessStep,
     Project,
+    ProjectSchedule,
     ProjectStatusChange,
+    ProjectStockReservation,
 )
 
 
@@ -61,9 +63,14 @@ class ProjectStatusChangeInline(admin.TabularInline):
         return False
 
 
+class ProjectScheduleInline(admin.TabularInline):
+    model = ProjectSchedule
+    extra = 0
+
+
 @admin.register(Project)
 class ProjectAdmin(DateTimeLayoutAdmin):
-    inlines: ClassVar = (ProjectStatusChangeInline,)
+    inlines: ClassVar = (ProjectScheduleInline, ProjectStatusChangeInline)
     list_display: ClassVar = ("name", "workshop", "blueprint", "status", "completed_at")
     list_filter: ClassVar = ("workshop", "status")
     search_fields: ClassVar = ("name", "description")
@@ -112,6 +119,28 @@ class ProjectStatusChangeAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None) -> bool:
         return False
+
+
+class ProjectStockReservationInline(admin.TabularInline):
+    model = ProjectStockReservation
+    extra = 0
+
+
+@admin.register(ProjectSchedule)
+class ProjectScheduleAdmin(DateTimeLayoutAdmin):
+    inlines: ClassVar = (ProjectStockReservationInline,)
+    list_display: ClassVar = ("project", "starts_at", "ends_at", "status")
+    list_filter: ClassVar = ("status", "project__workshop")
+    list_select_related: ClassVar = ("project",)
+    search_fields: ClassVar = ("project__name", "notes")
+
+
+@admin.register(ProjectStockReservation)
+class ProjectStockReservationAdmin(admin.ModelAdmin):
+    list_display: ClassVar = ("schedule_entry", "material", "quantity")
+    list_filter: ClassVar = ("material", "schedule_entry__status")
+    list_select_related: ClassVar = ("schedule_entry", "material")
+    search_fields: ClassVar = ("schedule_entry__project__name", "material__name")
 
 
 class ActivityMeasurementInline(admin.TabularInline):
