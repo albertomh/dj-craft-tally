@@ -242,7 +242,7 @@ class MaterialLot(models.Model):
 
 
 class EquipmentMaterial(models.Model):
-    """A material used by, or kept as a replacement for, equipment."""
+    """A material used by equipment, with optional replenishment settings."""
 
     class Role(models.TextChoices):
         INPUT = "input", _("Input")
@@ -256,6 +256,15 @@ class EquipmentMaterial(models.Model):
         Material, on_delete=models.PROTECT, related_name="equipment_associations"
     )
     role = models.CharField(max_length=16, choices=Role, default=Role.INPUT)
+    reserve_quantity = models.DecimalField(
+        max_digits=QUANTITY_MAX_DIGITS,
+        decimal_places=QUANTITY_DECIMAL_PLACES,
+        default=Decimal("0"),
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text=_(
+            "Minimum quantity to retain in the material's stock unit before reordering."
+        ),
+    )
 
     class Meta:
         verbose_name = _("Equipment material")
