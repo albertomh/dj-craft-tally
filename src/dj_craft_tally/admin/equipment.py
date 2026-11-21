@@ -23,8 +23,13 @@ class EquipmentTransactionInline(admin.TabularInline):
 class EquipmentMaterialInline(admin.TabularInline):
     model = EquipmentMaterial
     extra = 0
+    fields: ClassVar = (
+        "material",
+        "role",
+        "reserve_quantity",
+        "reorder_lead_time_days",
+    )
     autocomplete_fields: ClassVar = ("material",)
-    fields: ClassVar = ("material", "role")
 
 
 @admin.register(Equipment)
