@@ -168,6 +168,94 @@ class ProjectStatusChange(models.Model):
         raise ValidationError(_("Project status history entries cannot be deleted."))
 
 
+class ProjectSchedule(models.Model):
+    """A calendar entry for work planned on a project."""
+
+    class Status(models.TextChoices):
+        SCHEDULED = "scheduled", _("Scheduled")
+        COMPLETE = "complete", _("Complete")
+        CANCELLED = "cancelled", _("Cancelled")
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="schedule_entries"
+    )
+    starts_at = models.DateTimeField(help_text=_("When work is planned to begin."))
+    ends_at = models.DateTimeField(
+        null=True, blank=True, help_text=_("Optional planned end time.")
+    )
+    status = models.CharField(max_length=16, choices=Status, default=Status.SCHEDULED)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("Project schedule entry")
+        verbose_name_plural = _("Project schedule entries")
+        ordering = ("starts_at", "id")
+        indexes = (models.Index(fields=["status", "starts_at"]),)
+
+    def __str__(self) -> str:
+        return f"{self.project}: {self.starts_at:%Y-%m-%d %H:%M}"
+
+    def clean(self) -> None:
+        super().clean()
+        if self.ends_at and self.ends_at <= self.starts_at:
+            raise ValidationError(
+                {"ends_at": _("The planned end must be after the planned start.")}
+            )
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+class ProjectStockReservation(models.Model):
+    """Material held for a scheduled project without changing the ledger."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    schedule_entry = models.ForeignKey(
+        ProjectSchedule, on_delete=models.CASCADE, related_name="stock_reservations"
+    )
+    material = models.ForeignKey(
+        Material, on_delete=models.PROTECT, related_name="project_stock_reservations"
+    )
+    quantity = models.DecimalField(
+        max_digits=QUANTITY_MAX_DIGITS,
+        decimal_places=QUANTITY_DECIMAL_PLACES,
+        validators=[MinValueValidator(Decimal("0.000001"))],
+        help_text=_("Quantity in the material's stock unit."),
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("Project stock reservation")
+        verbose_name_plural = _("Project stock reservations")
+        ordering = ("schedule_entry__starts_at", "material__name")
+        constraints = (
+            models.UniqueConstraint(
+                fields=["schedule_entry", "material"],
+                name="unique_schedule_material_reservation",
+            ),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.schedule_entry}: {self.material}"
+
+    def clean(self) -> None:
+        super().clean()
+        if (
+            self.schedule_entry_id
+            and self.material_id
+            and self.schedule_entry.project.workshop_id != self.material.workshop_id
+        ):
+            raise ValidationError(
+                {"material": _("The material must belong to the project's workshop.")}
+            )
+
+    def save(self, *args, **kwargs) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
 class Process(models.Model):
     """A reusable ordered recipe of operations for a workshop."""
 
