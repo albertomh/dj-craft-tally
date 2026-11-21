@@ -27,7 +27,9 @@ from dj_craft_tally.models.projects import (
     ProcessStep,
     Project,
     ProjectQuerySet,
+    ProjectSchedule,
     ProjectStatusChange,
+    ProjectStockReservation,
 )
 
 from .core import (
@@ -69,7 +71,9 @@ __all__ = [
     "ProcessStep",
     "Project",
     "ProjectQuerySet",
+    "ProjectSchedule",
     "ProjectStatusChange",
+    "ProjectStockReservation",
     "Unit",
     "Workshop",
     "WorkshopMembership",

@@ -31,12 +31,17 @@ class CustomAdminSite(admin.AdminSite):
         "Blueprint",
         "Project",
         "ProjectStatusChange",
+        "ProjectStockReservation",
         "Activity",
         "Process",
         "ProcessStep",
         "InventoryTransaction",
         "InventoryTransactionLine",
     ]
+    # This only hides models from the index and sidebar. Their admin URLs still work.
+    # To block access entirely, don't register them (or override has_module_permission
+    # on their ModelAdmin).
+    HIDDEN_MODELS = frozenset({"crafttally.ProjectSchedule"})
     dashboard_template: ClassVar[str] = "admin/crafttally_index.html"
     STATUS_COLORS: ClassVar[dict[str, str]] = {
         "planned": "ct-status--planned",
@@ -54,10 +59,16 @@ class CustomAdminSite(admin.AdminSite):
         fallback = len(order)
 
         for app in app_list:
-            if app["app_label"] == DjCraftTallyConfig.label:
+            label = app["app_label"]
+            app["models"] = [
+                m
+                for m in app["models"]
+                if f"{label}.{m['object_name']}" not in self.HIDDEN_MODELS
+            ]
+            if label == DjCraftTallyConfig.label:
                 app["models"].sort(key=lambda m: order.get(m["object_name"], fallback))
 
-        return app_list
+        return [app for app in app_list if app["models"]]
 
     def dashboard_context(self, request) -> dict:
         """Return read-only summary metrics for the admin dashboard.
