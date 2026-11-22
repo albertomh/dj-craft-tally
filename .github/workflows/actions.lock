@@ -5,7 +5,7 @@ version: 'v0.0.3'
 workflows:
     '.github/workflows/_checks.yaml':
         - 'actions/checkout@v7.0.1'
-        - 'astral-sh/setup-uv@v10.3.3'
+        - 'astral-sh/setup-uv@v10.4.0'
         - 'j178/prek-action@v3.1.1'
         - 'wntrblm/nox@2026.10.20'
     '.github/workflows/ci.yaml': []
@@ -14,14 +14,14 @@ workflows:
         - 'actions/configure-pages@v6.0.0'
         - 'actions/deploy-pages@v5.0.1'
         - 'actions/upload-pages-artifact@v5.0.0'
-        - 'astral-sh/setup-uv@v10.3.3'
+        - 'astral-sh/setup-uv@v10.4.0'
     '.github/workflows/on-tag.yaml':
         - 'actions/checkout@v7.0.1'
         - 'astral-sh/setup-uv@v10.3.3'
     '.github/workflows/pr.yaml': []
     '.github/workflows/release-please.yaml':
         - 'actions/checkout@v7.0.1'
-        - 'astral-sh/setup-uv@v10.3.3'
+        - 'astral-sh/setup-uv@v10.4.0'
         - 'googleapis/release-please-action@v5.0.0'
         - 'stefanzweifel/git-auto-commit-action@v7.2.1'
     '.github/workflows/update-github-action-references.yaml':
@@ -62,6 +62,11 @@ dependencies:
     'astral-sh/setup-uv@v10.3.3':
         ref: 'v10.3.3'
         commit: 'sha1-68559e99cc807c1eb7e9238fd43a15bba460eec2'
+        owner_id: 115962839
+        repo_id: 846733598
+    'astral-sh/setup-uv@v10.4.0':
+        ref: 'v10.4.0'
+        commit: 'sha1-1db35dd8eee11c5894872e0b383ae6c406cf738d'
         owner_id: 115962839
         repo_id: 846733598
     'googleapis/release-please-action@v5.0.0':
