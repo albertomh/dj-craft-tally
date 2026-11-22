@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 
 from dj_craft_tally.admin.activities import ProjectStockReservationInline
+from dj_craft_tally.admin.materials import MaterialStockReservationInline
 from dj_craft_tally.models import (
     Activity,
     Equipment,
@@ -39,6 +40,21 @@ def test_material_reservation_balance_without_queryset_annotation(material, work
     )
 
     assert material.scheduled_reservation_balance() == Decimal("12")
+
+
+@pytest.mark.django_db
+def test_material_admin_reservation_inline_formats_quantity(material, workshop):
+    project = Project.objects.create(workshop=workshop, name="Miniatures")
+    schedule_entry = ProjectSchedule.objects.create(
+        project=project,
+        starts_at="2026-04-01T09:00Z",
+    )
+    reservation = ProjectStockReservation.objects.create(
+        schedule_entry=schedule_entry, material=material, quantity=Decimal("12")
+    )
+    inline = MaterialStockReservationInline(material.__class__, admin.site)
+
+    assert str(inline.display_quantity(reservation)).endswith("12.00 g</span>")
 
 
 @pytest.mark.django_db

@@ -117,9 +117,25 @@ class InventoryTransactionLineAdmin(admin.ModelAdmin):
     def display_quantity(self, obj):
         return format_quantity(obj.quantity, obj.material.unit, include_unit_code=True)
 
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        if obj and obj.transaction.posted:
+            visible_fields = []
+            for field_name in fields:
+                visible_field = (
+                    "display_quantity" if field_name == "quantity" else field_name
+                )
+                if visible_field not in visible_fields:
+                    visible_fields.append(visible_field)
+            return visible_fields
+        return fields
+
     def get_readonly_fields(self, request, obj=None):
         if obj and obj.transaction.posted:
-            return tuple(field.name for field in self.model._meta.fields)
+            return tuple(
+                "display_quantity" if field.name == "quantity" else field.name
+                for field in self.model._meta.fields
+            )
         return super().get_readonly_fields(request, obj)
 
     def has_delete_permission(self, request, obj=None):
