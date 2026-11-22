@@ -129,7 +129,9 @@ def test_datetime_inputs_use_the_shared_admin_layout(client):
     client.force_login(user)
 
     for model, field in (
+        ("currencytransaction", "created_at"),
         ("activity", "occurred_at"),
+        ("equipment", "transactions-__prefix__-created_at"),
         ("inventorytransaction", "occurred_at"),
         ("materiallot", "received_at"),
         ("project", "completed_at"),
