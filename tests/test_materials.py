@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 
+from dj_craft_tally.admin.materials import MaterialLotInline
 from dj_craft_tally.models import Material, MaterialLot
 
 
@@ -71,4 +72,11 @@ def test_material_lot_admin_locks_receipt_fields_after_creation(material: Materi
     lot_admin = admin.site._registry[MaterialLot]
     request = RequestFactory().get("/")
     assert "material" in lot_admin.get_readonly_fields(request, lot)
+    readonly_fields = lot_admin.get_readonly_fields(request, lot)
+    assert "display_quantity_per_package" in readonly_fields
+    fieldsets = lot_admin.get_fieldsets(request, lot)
+    assert "display_quantity_per_package" in fieldsets[0][1]["fields"]
     assert lot_admin.get_readonly_fields(request) == ()
+
+    inline = MaterialLotInline(Material, admin.site)
+    assert str(inline.display_quantity_per_package(lot)).endswith("1.00 g</span>")

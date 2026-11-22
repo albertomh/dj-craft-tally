@@ -126,7 +126,11 @@ def test_inventory_admin_protects_posted_records(workshop, material):
         quantity=1,
     )
     line.transaction.posted = True
-    assert "quantity" in line_admin.get_readonly_fields(request, line)
+    readonly_fields = line_admin.get_readonly_fields(request, line)
+    assert "display_quantity" in readonly_fields
+    assert "quantity" not in line_admin.get_fields(request, line)
+    assert str(line_admin.display_quantity(line)).endswith("1.00 g</span>")
+    assert "quantity" in line_admin.get_fields(request)
     assert line_admin.get_readonly_fields(request) == ()
     assert "delete_selected" not in line_admin.get_actions(request)
 
