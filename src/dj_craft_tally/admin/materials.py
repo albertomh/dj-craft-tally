@@ -142,7 +142,7 @@ class MaterialLotInline(admin.TabularInline):
         "received_at",
         "supplier",
         "package_count",
-        "quantity_per_package",
+        "display_quantity_per_package",
         "display_cost",
     )
     readonly_fields: ClassVar = fields
@@ -152,6 +152,12 @@ class MaterialLotInline(admin.TabularInline):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("transaction__currency")
+
+    @admin.display(description=_("Quantity per package"))
+    def display_quantity_per_package(self, obj):
+        return format_quantity(
+            obj.quantity_per_package, obj.material.unit, include_unit_code=True
+        )
 
     @admin.display(description=_("Paid"))
     def display_cost(self, obj):
@@ -166,11 +172,15 @@ class MaterialStockReservationInline(admin.TabularInline):
     fk_name = "material"
     extra = 0
     can_delete = False
-    fields: ClassVar = ("schedule_entry", "quantity", "notes")
+    fields: ClassVar = ("schedule_entry", "display_quantity", "notes")
     readonly_fields: ClassVar = fields
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.display(description=_("Quantity"))
+    def display_quantity(self, obj):
+        return format_quantity(obj.quantity, obj.material.unit, include_unit_code=True)
 
 
 @admin.register(Material)
@@ -267,8 +277,28 @@ class MaterialLotAdmin(DateTimeLayoutAdmin):
             return (
                 "material",
                 "package_count",
-                "quantity_per_package",
+                "display_quantity_per_package",
                 "received_at",
                 "reference",
             )
         return super().get_readonly_fields(request, obj)
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if obj is None:
+            return fieldsets
+        return [
+            (
+                name,
+                {
+                    **options,
+                    "fields": tuple(
+                        "display_quantity_per_package"
+                        if field == "quantity_per_package"
+                        else field
+                        for field in options["fields"]
+                    ),
+                },
+            )
+            for name, options in fieldsets
+        ]

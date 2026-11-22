@@ -119,7 +119,10 @@ class InventoryTransactionLineAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj and obj.transaction.posted:
-            return tuple(field.name for field in self.model._meta.fields)
+            return tuple(
+                "display_quantity" if field.name == "quantity" else field.name
+                for field in self.model._meta.fields
+            )
         return super().get_readonly_fields(request, obj)
 
     def has_delete_permission(self, request, obj=None):

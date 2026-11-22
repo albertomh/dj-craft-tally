@@ -80,7 +80,12 @@ class ProjectAdmin(DateTimeLayoutAdmin):
     )
 
     class Media:
-        css: ClassVar = {"all": ("dj_craft_tally/css/project_status_history.css",)}
+        css: ClassVar = {
+            "all": (
+                "dj_craft_tally/css/datetime_layout.css",
+                "dj_craft_tally/css/project_status_history.css",
+            )
+        }
 
 
 @admin.register(ProjectStatusChange)
