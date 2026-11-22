@@ -2,7 +2,11 @@ from typing import ClassVar
 
 from django.contrib import admin
 
-from dj_craft_tally.admin._utils import _WIDE_TEXTAREA_MIN_WIDTH, textarea_overrides
+from dj_craft_tally.admin._utils import (
+    _WIDE_TEXTAREA_MIN_WIDTH,
+    DateTimeLayoutAdmin,
+    textarea_overrides,
+)
 from dj_craft_tally.models import CurrencyTransaction, Equipment, EquipmentMaterial
 
 
@@ -19,6 +23,9 @@ class EquipmentTransactionInline(admin.TabularInline):
     extra = 0
     show_change_link = True
 
+    class Media:
+        css: ClassVar = {"all": ("dj_craft_tally/css/datetime_layout.css",)}
+
 
 class EquipmentMaterialInline(admin.TabularInline):
     model = EquipmentMaterial
@@ -32,7 +39,7 @@ class EquipmentMaterialInline(admin.TabularInline):
 
 
 @admin.register(Equipment)
-class EquipmentAdmin(admin.ModelAdmin):
+class EquipmentAdmin(DateTimeLayoutAdmin):
     inlines: ClassVar = (EquipmentMaterialInline, EquipmentTransactionInline)
     list_display: ClassVar = (
         "name",
