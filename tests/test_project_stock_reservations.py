@@ -26,6 +26,22 @@ from dj_craft_tally.services import consumable_forecast
 
 
 @pytest.mark.django_db
+def test_material_reservation_balance_without_queryset_annotation(material, workshop):
+    assert material.scheduled_reservation_balance() == Decimal("0")
+
+    project = Project.objects.create(workshop=workshop, name="Miniatures")
+    schedule_entry = ProjectSchedule.objects.create(
+        project=project,
+        starts_at="2026-04-01T09:00Z",
+    )
+    ProjectStockReservation.objects.create(
+        schedule_entry=schedule_entry, material=material, quantity=Decimal("12")
+    )
+
+    assert material.scheduled_reservation_balance() == Decimal("12")
+
+
+@pytest.mark.django_db
 def test_stock_reservation_must_use_the_projects_workshop_material(material, workshop):
     project = Project.objects.create(workshop=workshop, name="Miniatures")
     schedule_entry = ProjectSchedule.objects.create(

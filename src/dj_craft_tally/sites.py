@@ -152,6 +152,7 @@ class CustomAdminSite(admin.AdminSite):
             "materials_running_low": list(
                 Material.objects.filter(kind=Material.Kind.INPUT)
                 .select_related("workshop", "unit")
+                .with_scheduled_reservations()
                 .order_by("name")[:5]
             ),
         }
@@ -166,8 +167,22 @@ class CustomAdminSite(admin.AdminSite):
             **(extra_context or {}),
         }
         for material in context.get("materials_running_low", []):
-            material.stock_balance()
-        context["materials_running_low"].sort(key=lambda m: m.stock_balance())
+            material.dashboard_stock_balance = format_quantity(
+                material.stock_balance(), material.unit, include_unit_code=True
+            )
+            material.display_scheduled_reservation_balance = format_quantity(
+                material.scheduled_reservation_balance(),
+                material.unit,
+                include_unit_code=True,
+            )
+            material.display_available_stock_balance = format_quantity(
+                material.available_stock_balance(),
+                material.unit,
+                include_unit_code=True,
+            )
+        context["materials_running_low"].sort(
+            key=lambda material: material.available_stock_balance()
+        )
         request.current_app = self.name
         return TemplateResponse(request, self.dashboard_template, context)
 

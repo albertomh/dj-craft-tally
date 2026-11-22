@@ -3,7 +3,7 @@
 
 {% block content_title %}{% endblock %}
 
-{% block title %}{% translate "crafttally dashboard" %}{% endblock %}
+{% block title %}{% translate "Craft Tally dashboard" %}{% endblock %}
 {% block content %}
 <div id="content-main" class="ct-dashboard">
   <div class="ct-cards">
@@ -137,7 +137,9 @@
         <tr>
           <th>{% translate "Workshop" %}</th>
           <th>{% translate "Material" %}</th>
-          <th>{% translate "Quantity" %}</th>
+          <th>{% translate "Stock balance" %}</th>
+          <th>{% translate "Reservations" %}</th>
+          <th>{% translate "Available stock" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -147,7 +149,9 @@
               {{ material.workshop.name}}</a>
           </td>
           <td><a href="{% url 'admin:crafttally_material_change' material.pk %}">{{ material.name }}</a></td>
-          <td>{% if material.stock_balance %}{{ material.display_stock_balance }}{% else %}&mdash;{% endif %}</td>
+          <td>{{ material.dashboard_stock_balance }}</td>
+          <td>{{ material.display_scheduled_reservation_balance }}</td>
+          <td>{{ material.display_available_stock_balance }}</td>
         </tr>
         {% endfor %}
       </tbody>
