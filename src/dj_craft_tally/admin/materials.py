@@ -19,6 +19,7 @@ from dj_craft_tally.models import (
     Currency,
     Material,
     MaterialLot,
+    ProjectStockReservation,
 )
 
 
@@ -160,15 +161,29 @@ class MaterialLotInline(admin.TabularInline):
         return format_money(amount, currency)
 
 
+class MaterialStockReservationInline(admin.TabularInline):
+    model = ProjectStockReservation
+    fk_name = "material"
+    extra = 0
+    can_delete = False
+    fields: ClassVar = ("schedule_entry", "quantity", "notes")
+    readonly_fields: ClassVar = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
-    inlines: ClassVar = (MaterialLotInline,)
+    inlines: ClassVar = (MaterialLotInline, MaterialStockReservationInline)
     list_display: ClassVar = (
         "name",
         "brand",
         "kind",
         "workshop",
         "display_stock_balance",
+        "display_scheduled_reservations",
+        "display_available_stock",
     )
     list_select_related: ClassVar = ("unit",)
     list_filter: ClassVar = ("workshop", "kind")
@@ -181,6 +196,21 @@ class MaterialAdmin(admin.ModelAdmin):
     @admin.display(description=_("Stock balance"))
     def display_stock_balance(self, obj):
         return format_quantity(obj.stock_balance(), obj.unit, include_unit_code=True)
+
+    @admin.display(description=_("Reservations"))
+    def display_scheduled_reservations(self, obj):
+        return format_quantity(
+            obj.scheduled_reservation_balance(), obj.unit, include_unit_code=True
+        )
+
+    @admin.display(description=_("Available stock"))
+    def display_available_stock(self, obj):
+        return format_quantity(
+            obj.available_stock_balance(), obj.unit, include_unit_code=True
+        )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).with_scheduled_reservations()
 
 
 @admin.register(MaterialLot)

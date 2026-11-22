@@ -448,8 +448,8 @@ msgid "Year to date"
 msgstr "Desde el 1 ene."
 
 #: templates/admin/crafttally_index.html:6
-msgid "crafttally dashboard"
-msgstr "Panel de control de crafttally"
+msgid "Craft Tally dashboard"
+msgstr "Panel de control de Craft Tally"
 
 #: templates/admin/crafttally_index.html:29
 msgid "Projects by status"

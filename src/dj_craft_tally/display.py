@@ -17,11 +17,21 @@ if TYPE_CHECKING:
 
 
 def format_quantity(
-    value: Decimal | None, unit: "Unit", *, include_unit_code: bool = False
+    value: Decimal | None,
+    unit: "Unit",
+    *,
+    include_unit_code: bool = False,
+    zero_display: str | None = "—",
 ):
-    """Render a quantity using the display precision of its unit."""
+    """Render a quantity using the display precision of its unit.
+
+    Exact zero is shown as ``zero_display`` (an em dash by default), without an
+    exact-value tooltip. Pass ``None`` to render zero using the normal format.
+    """
     if value is None:
         return None
+    if value == 0 and zero_display is not None:
+        return format_html("<span>{}</span>", zero_display)
 
     places = unit.display_decimal_places
     with localcontext() as context:

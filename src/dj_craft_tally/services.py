@@ -10,7 +10,11 @@ from django.db.models import Sum
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from dj_craft_tally.models import CurrencyTransaction, InventoryTransactionLine
+from dj_craft_tally.models import (
+    CurrencyTransaction,
+    InventoryTransactionLine,
+    ProjectStockReservation,
+)
 
 if TYPE_CHECKING:
     from dj_craft_tally.models import EquipmentMaterial
@@ -40,6 +44,8 @@ class ConsumableForecast:
     consumed_quantity: Decimal
     average_daily_consumption: Decimal
     stock_quantity: Decimal
+    scheduled_reservation_quantity: Decimal
+    available_quantity: Decimal
     reserve_quantity: Decimal
     depletion_at: datetime | None
 
@@ -90,11 +96,16 @@ def consumable_forecast(
     period_days = Decimal(str((as_of - period_start).total_seconds() / 86400))
     average_daily_consumption = consumed_quantity / period_days
     stock_quantity = equipment_material.material.stock_balance()
+    scheduled_reservation_quantity = ProjectStockReservation.objects.filter(
+        material=equipment_material.material,
+        schedule_entry__status="scheduled",
+    ).aggregate(total=Sum("quantity"))["total"] or Decimal("0")
+    available_quantity = stock_quantity - scheduled_reservation_quantity
 
     if average_daily_consumption == 0:
         depletion_at = None
     else:
-        depletion_days = stock_quantity / average_daily_consumption
+        depletion_days = available_quantity / average_daily_consumption
         depletion_at = as_of + timedelta(days=float(max(depletion_days, Decimal("0"))))
 
     return ConsumableForecast(
@@ -104,6 +115,8 @@ def consumable_forecast(
         consumed_quantity=consumed_quantity,
         average_daily_consumption=average_daily_consumption,
         stock_quantity=stock_quantity,
+        scheduled_reservation_quantity=scheduled_reservation_quantity,
+        available_quantity=available_quantity,
         reserve_quantity=equipment_material.reserve_quantity,
         depletion_at=depletion_at,
     )

@@ -10,6 +10,7 @@ from dj_craft_tally.models import (
     Process,
     ProcessStep,
     Project,
+    ProjectSchedule,
     ProjectStatusChange,
     Unit,
 )
@@ -32,6 +33,7 @@ def test_custom_admin_site_orders_registered_models(db):
         ProjectStatusChange,
         Process,
         Project,
+        ProjectSchedule,
     ):
         site.register(model)
     request = RequestFactory().get("/")

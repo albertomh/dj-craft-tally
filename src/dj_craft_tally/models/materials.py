@@ -5,9 +5,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
+from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -27,6 +29,31 @@ class MaterialQuerySet(models.QuerySet):
     """QuerySet safeguards for material stock units."""
 
     PROTECTED_FIELDS = frozenset({"unit", "unit_id"})
+
+    def with_scheduled_reservations(self):
+        """Annotate each material with its scheduled reservation quantity."""
+        ProjectSchedule = apps.get_model("crafttally", "ProjectSchedule")
+        ProjectStockReservation = apps.get_model("crafttally", "ProjectStockReservation")
+        quantity_field = models.DecimalField(
+            max_digits=QUANTITY_MAX_DIGITS, decimal_places=QUANTITY_DECIMAL_PLACES
+        )
+        reservations = (
+            ProjectStockReservation.objects.filter(
+                material=models.OuterRef("pk"),
+                schedule_entry__status=ProjectSchedule.Status.SCHEDULED,
+            )
+            .order_by()
+            .values("material")
+            .annotate(total=models.Sum("quantity"))
+            .values("total")
+        )
+        return self.annotate(
+            _scheduled_reservation_quantity=Coalesce(
+                models.Subquery(reservations, output_field=quantity_field),
+                models.Value(Decimal("0"), output_field=quantity_field),
+                output_field=quantity_field,
+            )
+        )
 
     def _check_fields_mutable(self, fields: Iterable[str]) -> None:
         if self.PROTECTED_FIELDS.intersection(fields):
@@ -85,6 +112,23 @@ class Material(models.Model):
             .iterator(),
             Decimal(0),
         )
+
+    def scheduled_reservation_balance(self) -> Decimal:
+        """Return the quantity reserved on scheduled project entries."""
+        annotated_quantity = getattr(self, "_scheduled_reservation_quantity", None)
+        if annotated_quantity is not None:
+            return annotated_quantity
+
+        ProjectSchedule = apps.get_model("crafttally", "ProjectSchedule")
+        ProjectStockReservation = apps.get_model("crafttally", "ProjectStockReservation")
+        return ProjectStockReservation.objects.filter(
+            material=self,
+            schedule_entry__status=ProjectSchedule.Status.SCHEDULED,
+        ).aggregate(total=models.Sum("quantity"))["total"] or Decimal("0")
+
+    def available_stock_balance(self) -> Decimal:
+        """Return on-hand stock after scheduled reservations are accounted for."""
+        return self.stock_balance() - self.scheduled_reservation_balance()
 
     @cached_property
     def display_stock_balance(self) -> str:

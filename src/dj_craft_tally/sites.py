@@ -31,12 +31,17 @@ class CustomAdminSite(admin.AdminSite):
         "Blueprint",
         "Project",
         "ProjectStatusChange",
+        "ProjectStockReservation",
         "Activity",
         "Process",
         "ProcessStep",
         "InventoryTransaction",
         "InventoryTransactionLine",
     ]
+    # This only hides models from the index and sidebar. Their admin URLs still work.
+    # To block access entirely, don't register them (or override has_module_permission
+    # on their ModelAdmin).
+    HIDDEN_MODELS = frozenset({"crafttally.ProjectSchedule"})
     dashboard_template: ClassVar[str] = "admin/crafttally_index.html"
     STATUS_COLORS: ClassVar[dict[str, str]] = {
         "planned": "ct-status--planned",
@@ -54,10 +59,16 @@ class CustomAdminSite(admin.AdminSite):
         fallback = len(order)
 
         for app in app_list:
-            if app["app_label"] == DjCraftTallyConfig.label:
+            label = app["app_label"]
+            app["models"] = [
+                m
+                for m in app["models"]
+                if f"{label}.{m['object_name']}" not in self.HIDDEN_MODELS
+            ]
+            if label == DjCraftTallyConfig.label:
                 app["models"].sort(key=lambda m: order.get(m["object_name"], fallback))
 
-        return app_list
+        return [app for app in app_list if app["models"]]
 
     def dashboard_context(self, request) -> dict:
         """Return read-only summary metrics for the admin dashboard.
@@ -141,6 +152,7 @@ class CustomAdminSite(admin.AdminSite):
             "materials_running_low": list(
                 Material.objects.filter(kind=Material.Kind.INPUT)
                 .select_related("workshop", "unit")
+                .with_scheduled_reservations()
                 .order_by("name")[:5]
             ),
         }
@@ -155,8 +167,22 @@ class CustomAdminSite(admin.AdminSite):
             **(extra_context or {}),
         }
         for material in context.get("materials_running_low", []):
-            material.stock_balance()
-        context["materials_running_low"].sort(key=lambda m: m.stock_balance())
+            material.dashboard_stock_balance = format_quantity(
+                material.stock_balance(), material.unit, include_unit_code=True
+            )
+            material.display_scheduled_reservation_balance = format_quantity(
+                material.scheduled_reservation_balance(),
+                material.unit,
+                include_unit_code=True,
+            )
+            material.display_available_stock_balance = format_quantity(
+                material.available_stock_balance(),
+                material.unit,
+                include_unit_code=True,
+            )
+        context["materials_running_low"].sort(
+            key=lambda material: material.available_stock_balance()
+        )
         request.current_app = self.name
         return TemplateResponse(request, self.dashboard_template, context)
 
