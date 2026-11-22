@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.0](https://github.com/albertomh/dj-craft-tally/compare/0.2.0...0.3.0) (2026-11-22)
+
+
+### Features
+
+* Add 'brand' field to material model ([#81](https://github.com/albertomh/dj-craft-tally/issues/81)) ([6cd93da](https://github.com/albertomh/dj-craft-tally/commit/6cd93da1b90f4745eefb3d76efe775361a00aafa))
+* Add consumable replenishment forecasts ([#84](https://github.com/albertomh/dj-craft-tally/issues/84)) ([f42c34c](https://github.com/albertomh/dj-craft-tally/commit/f42c34c111722fe5d5cfc29af572bcb2317e0615))
+* Associate materials with equipment ([#80](https://github.com/albertomh/dj-craft-tally/issues/80)) ([1a2c6c2](https://github.com/albertomh/dj-craft-tally/commit/1a2c6c23a29346937e340434af997376c158e90c))
+* Reserve stock for scheduled projects ([#85](https://github.com/albertomh/dj-craft-tally/issues/85)) ([d8e61a0](https://github.com/albertomh/dj-craft-tally/commit/d8e61a04714445130d42c5656b517e5c797289cf))
+
+
+### Bug Fixes
+
+* **admin:** Display quantities consistently ([#90](https://github.com/albertomh/dj-craft-tally/issues/90)) ([0582d31](https://github.com/albertomh/dj-craft-tally/commit/0582d31a4f0af7b580c3466b1e3db1db42d14259))
+* **admin:** Inline date/time controls ([#89](https://github.com/albertomh/dj-craft-tally/issues/89)) ([c0d3f24](https://github.com/albertomh/dj-craft-tally/commit/c0d3f24795ef2b0e4f1aadaa71dd1871cb1706ac))
+* Update uv lock on release PR refresh ([#87](https://github.com/albertomh/dj-craft-tally/issues/87)) ([2b0a548](https://github.com/albertomh/dj-craft-tally/commit/2b0a5486abf0328fbcd94bedd81ec7a773c13b1e))
+
 ## [0.2.0](https://github.com/albertomh/dj-craft-tally/compare/0.1.0...0.2.0) (2026-11-20)
 
 
