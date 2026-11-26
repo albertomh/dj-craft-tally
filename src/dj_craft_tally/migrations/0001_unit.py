@@ -2,6 +2,7 @@
 
 import dj_craft_tally.identifiers
 import django.core.validators
+import django.db.models.deletion
 from decimal import Decimal
 from django.db import migrations, models
 
@@ -80,6 +81,16 @@ def add_initial_units(apps, schema_editor):
             ),
         ]
     )
+    for dimension, code in (
+        ("count", "item"),
+        ("mass", "g"),
+        ("volume", "mL"),
+        ("length", "mm"),
+        ("area", "mm2"),
+        ("time", "s"),
+    ):
+        base = unit.objects.get(code=code)
+        unit.objects.filter(dimension=dimension).update(base_unit=base)
 
 
 class Migration(migrations.Migration):
@@ -122,6 +133,17 @@ class Migration(migrations.Migration):
                             ("time", "Time"),
                         ],
                         max_length=16,
+                    ),
+                ),
+                (
+                    "base_unit",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Unit in which the conversion scale is expressed, if known.",
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="derived_units",
+                        to="crafttally.unit",
                     ),
                 ),
                 (

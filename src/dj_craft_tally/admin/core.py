@@ -12,6 +12,7 @@ class UnitAdmin(admin.ModelAdmin):
         "symbol",
         "name",
         "dimension",
+        "base_unit",
         "scale_to_base",
         "display_decimal_places",
     )
@@ -21,6 +22,7 @@ class UnitAdmin(admin.ModelAdmin):
         "symbol",
         "name",
         "dimension",
+        "base_unit",
         "scale_to_base",
         "display_decimal_places",
     )
