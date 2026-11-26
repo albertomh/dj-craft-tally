@@ -65,6 +65,12 @@
     than accompanies, `django.contrib.admin` in `INSTALLED_APPS`. Enable Django
     admin in your host project and use a staff account to manage the app's records.
 
+    Units identify their conversion reference with `base_unit`: each seeded base
+    unit points to itself and has a scale of 1, while other units point to that
+    base and use `scale_to_base` as their multiplier. A null base means the
+    reference is unspecified. Units sharing a base must have the same dimension;
+    call `full_clean()` when creating or changing units to validate this relation.
+
 ## Features
 
 `dj-craft-tally` extends the Django admin to help you:

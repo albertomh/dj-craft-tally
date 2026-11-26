@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
@@ -70,9 +71,9 @@ class WorkshopMembership(models.Model):
 class Unit(models.Model):
     """A global unit of measure used for inventory and outputs.
 
-    ``scale_to_base`` converts an entered quantity into its dimension's base
-    unit. For example, kilograms have a scale of ``1000`` when grams are the
-    mass base unit.
+    ``base_unit`` identifies the unit used by ``scale_to_base``. Base units
+    refer to themselves and have a scale of one. For example, kilograms have
+    grams as their base and a scale of ``1000``. A null base is unspecified.
     """
 
     class Dimension(models.TextChoices):
@@ -92,6 +93,14 @@ class Unit(models.Model):
     name = models.CharField(max_length=100)
     symbol = models.CharField(max_length=16)
     dimension = models.CharField(max_length=16, choices=Dimension)
+    base_unit = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        related_name="derived_units",
+        null=True,
+        blank=True,
+        help_text=_("Unit in which the conversion scale is expressed, if known."),
+    )
     display_decimal_places = models.PositiveSmallIntegerField(
         default=2,
         validators=[MaxValueValidator(QUANTITY_DECIMAL_PLACES)],
@@ -128,6 +137,30 @@ class Unit(models.Model):
 
     def __str__(self) -> str:
         return self.symbol
+
+    def clean(self):
+        super().clean()
+        if not self.base_unit_id:
+            return
+        if self.base_unit_id == self.pk:
+            if self.scale_to_base != Decimal("1"):
+                raise ValidationError(
+                    {"scale_to_base": _("A base unit must have a scale of 1.")}
+                )
+            return
+        base = self.base_unit
+        if base.dimension != self.dimension:
+            raise ValidationError(
+                {"base_unit": _("The base unit must have the same dimension.")}
+            )
+        if base.base_unit_id != base.pk or base.scale_to_base != Decimal("1"):
+            raise ValidationError(
+                {
+                    "base_unit": _(
+                        "The base unit must refer to itself and have a scale of 1."
+                    )
+                }
+            )
 
 
 class Currency(models.Model):
