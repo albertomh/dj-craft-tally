@@ -54,7 +54,7 @@ runs:
         persist-credentials: false
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v10.3.3 # zizmor: ignore[unpinned-uses]
+      uses: astral-sh/setup-uv@v10.4.0 # zizmor: ignore[unpinned-uses]
 
     - name: Install the Python version specified by pyproject.toml
       shell: bash
