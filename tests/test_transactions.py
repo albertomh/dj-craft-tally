@@ -20,6 +20,27 @@ from dj_craft_tally.services import expenditure_periods
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("amount", ["999999999.999999", "-999999999.999999"])
+def test_transaction_amount_round_trips_at_precision_limit(workshop, amount):
+    transaction = CurrencyTransaction.objects.create(
+        workshop=workshop, description="Limit", amount=Decimal(amount), currency_id="GBP"
+    )
+    transaction.refresh_from_db()
+    assert transaction.amount == Decimal(amount)
+
+
+@pytest.mark.django_db
+def test_transaction_rejects_amount_above_precision_limit(workshop):
+    with pytest.raises(ValidationError, match="no more than 15 digits"):
+        CurrencyTransaction.objects.create(
+            workshop=workshop,
+            description="Too large",
+            amount=Decimal("1000000000.000000"),
+            currency_id="GBP",
+        )
+
+
+@pytest.mark.django_db
 def test_transaction_rejects_other_workshop_project():
     workshop = Workshop.objects.create(name="Workshop")
     other = Workshop.objects.create(name="Other")

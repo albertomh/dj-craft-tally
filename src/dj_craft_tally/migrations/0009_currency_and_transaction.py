@@ -67,7 +67,7 @@ class Migration(migrations.Migration):
                     models.DecimalField(
                         decimal_places=6,
                         help_text="Negative for expenses, positive for income.",
-                        max_digits=19,
+                        max_digits=15,
                     ),
                 ),
                 (

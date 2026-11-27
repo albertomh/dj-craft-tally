@@ -71,6 +71,11 @@
     reference is unspecified. Units sharing a base must have the same dimension;
     call `full_clean()` when creating or changing units to validate this relation.
 
+    Currency transaction amounts support six decimal places and values from
+    -999999999.999999 to 999999999.999999. Before upgrading an existing database,
+    resolve any transactions outside this range; the migration narrows the field
+    and does not convert those amounts.
+
 ## Features
 
 `dj-craft-tally` extends the Django admin to help you:
