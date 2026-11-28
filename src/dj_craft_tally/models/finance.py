@@ -25,7 +25,7 @@ class CurrencyTransaction(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     description = models.CharField(max_length=500)
     amount = models.DecimalField(
-        max_digits=19,
+        max_digits=15,
         decimal_places=6,
         help_text=_("Negative for expenses, positive for income."),
     )

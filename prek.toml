@@ -68,5 +68,9 @@ hooks = [{ id = "zizmor" }]
 
 [[repos]]
 repo = "https://github.com/pre-commit/mirrors-mypy"
-rev = "v2.3.1"
-hooks = [{ id = "mypy" }]
+rev = "v2.4.1"
+hooks = [
+    { id = "mypy", exclude = { glob = [
+        ".pdbrc",
+    ] } },
+]
