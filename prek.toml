@@ -70,9 +70,7 @@ hooks = [{ id = "zizmor" }]
 repo = "https://github.com/pre-commit/mirrors-mypy"
 rev = "v2.4.1"
 hooks = [
-    { id = "mypy", additional_dependencies = [
-        "django-stubs[compatible-mypy]==6.1.2",
-    ], exclude = { glob = [
+    { id = "mypy", exclude = { glob = [
         ".pdbrc",
     ] } },
 ]
