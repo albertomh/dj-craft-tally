@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/albertomh/dj-craft-tally/compare/0.3.0...0.4.0) (2026-11-28)
+
+
+### Features
+
+* Define unit base relationships ([#96](https://github.com/albertomh/dj-craft-tally/issues/96)) ([33c5eb9](https://github.com/albertomh/dj-craft-tally/commit/33c5eb9b3f7145c1c4b6d45f0e401cbc110742a1))
+
+
+### Bug Fixes
+
+* **i18n:** Ship compiled translation catalogs in distributions ([#99](https://github.com/albertomh/dj-craft-tally/issues/99)) ([905000d](https://github.com/albertomh/dj-craft-tally/commit/905000dbdabe735a299700f537f6dcc5741b3ce7))
+* Limit transaction precision for SQLite ([#100](https://github.com/albertomh/dj-craft-tally/issues/100)) ([6e99479](https://github.com/albertomh/dj-craft-tally/commit/6e99479eb352b7d05f21adf9c27d38ea718afa2d))
+
 ## [0.3.0](https://github.com/albertomh/dj-craft-tally/compare/0.2.0...0.3.0) (2026-11-22)
 
 
