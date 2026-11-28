@@ -49,6 +49,7 @@ coverage.xml
 
 # Translations
 *.mo
+!src/dj_craft_tally/locale/*/LC_MESSAGES/django.mo
 *.pot
 
 # Django stuff:

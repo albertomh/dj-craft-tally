@@ -177,7 +177,8 @@ cd src/dj_craft_tally && \
 uv run django-admin makemessages -l es_ES -l fr_FR
 ```
 
-Review and update the generated `.po` files, then compile them to `.mo` files:
+Review and update the generated `.po` files, then compile them to `.mo` files.
+Commit both formats so wheels and source distributions include translations:
 
 ```sh
 cd src/dj_craft_tally && \

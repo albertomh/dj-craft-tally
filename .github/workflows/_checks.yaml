@@ -44,8 +44,17 @@ jobs:
       - name: Check gettext catalogs
         run: |
           for catalog in src/dj_craft_tally/locale/*/LC_MESSAGES/django.po; do
-            msgfmt --check --check-format "$catalog"
+            compiled="${catalog%.po}.mo"
+            msgfmt --check --check-format -o /tmp/django.mo "$catalog"
+            cmp "$compiled" /tmp/django.mo
           done
+      - uses: astral-sh/setup-uv@v10.4.0
+        with:
+          version: "0.12.5"
+      - name: Check distribution catalogs
+        run: |
+          uv build --out-dir dist/translation-check
+          uv run python .github/scripts/check-translation-distributions.py
 
   generate_nox_py_versions:
     runs-on: ubuntu-26.04
